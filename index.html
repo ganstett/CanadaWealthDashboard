@@ -169,6 +169,20 @@
           <canvas id="scatterChart"></canvas>
         </div>
       </div>
+      <!-- Net Worth by Percentile (2025) -->
+      <div class="chart-card" style="grid-column: span 2;">
+        <h3 id="percentileNetWorthTitle">Net Worth by Percentile (2025)</h3>
+        <div class="chart-container" style="height: 500px;">
+          <canvas id="percentileNetWorthChart"></canvas>
+        </div>
+      </div>
+      <!-- Income by Percentile (2025) -->
+      <div class="chart-card" style="grid-column: span 2;">
+        <h3 id="percentileIncomeTitle">Income by Percentile (2025)</h3>
+        <div class="chart-container" style="height: 500px;">
+          <canvas id="percentileIncomeChart"></canvas>
+        </div>
+      </div>
       <!-- Projected Median Net Worth by Province (2025) -->
       <div class="chart-card" style="grid-column: span 2;">
         <h3 id="provinceTitle">Projected Median Net Worth by Province (2025)</h3>
@@ -571,6 +585,84 @@
     let compositionChartInstance;
     let provinceIncomeChartInstance;
     let scatterChartInstance;
+    let percentileNetWorthChartInstance;
+    let percentileIncomeChartInstance;
+
+    // Labels for percentile charts (1..99)
+    const percentileLabels = Array.from({ length: 99 }, (_, i) => String(i + 1));
+
+    // Anchors for constructing percentile curves (ratios of median)
+    const netWorthPercentileAnchors = [
+      { p: 1, r: 0.05 }, { p: 10, r: 0.10 }, { p: 25, r: 0.35 },
+      { p: 50, r: 1.00 }, { p: 75, r: 1.50 }, { p: 90, r: 1.80 }, { p: 99, r: 12.0 }
+    ];
+    const incomePercentileAnchors = [
+      { p: 1, r: 0.10 }, { p: 10, r: 0.22 }, { p: 25, r: 0.54 },
+      { p: 50, r: 1.00 }, { p: 75, r: 1.64 }, { p: 90, r: 2.44 }, { p: 99, r: 6.0 }
+    ];
+
+    // Build a 1..99 curve from anchors using log-linear interpolation for smooth heavy tails
+    function buildPercentileCurveFromAnchors(anchors) {
+      const sorted = anchors.slice().sort((a, b) => a.p - b.p);
+      const curve = new Array(99);
+      let idx = 0;
+      for (let p = 1; p <= 99; p++) {
+        while (idx < sorted.length - 1 && p > sorted[idx + 1].p) idx++;
+        const a = sorted[Math.max(0, idx)];
+        const b = sorted[Math.min(sorted.length - 1, idx + 1)];
+        const t = (p - a.p) / Math.max(1, (b.p - a.p));
+        const lr = Math.exp(Math.log(a.r) + (Math.log(b.r) - Math.log(a.r)) * Math.max(0, Math.min(1, t)));
+        curve[p - 1] = lr;
+      }
+      return curve;
+    }
+
+    // Given a median value and anchor ratios, return absolute values for 1..99 percentiles
+    function makePercentileValues(median, anchors) {
+      const ratios = buildPercentileCurveFromAnchors(anchors);
+      return ratios.map(r => Math.round(median * r));
+    }
+
+    // Find the percentile index (0-based) closest to the given value on the curve
+    function findPercentileIndex(value, curveValues) {
+      let bestIdx = 0;
+      let bestDiff = Infinity;
+      for (let i = 0; i < curveValues.length; i++) {
+        const d = Math.abs(curveValues[i] - value);
+        if (d < bestDiff) { bestDiff = d; bestIdx = i; }
+      }
+      return bestIdx;
+    }
+
+    // Plugin to draw a user reference line: vertical (by index) or horizontal (by value)
+    const userVLinePlugin = {
+      id: 'userVLine',
+      afterDraw(chart, args, options) {
+        if (!options) return;
+        const { ctx, chartArea, scales } = chart;
+        ctx.save();
+        ctx.strokeStyle = (options.color || 'rgba(244,67,54,1)');
+        ctx.setLineDash(options.dash || [6,3]);
+        ctx.lineWidth = options.width || 2;
+        if (options.index != null && scales.x) {
+          // Vertical line aligned to a categorical tick index
+          const x = scales.x.getPixelForTick(options.index);
+          ctx.beginPath();
+          ctx.moveTo(x, chartArea.top);
+          ctx.lineTo(x, chartArea.bottom);
+          ctx.stroke();
+        } else if (options.yValue != null && scales.y) {
+          // Horizontal line at a numeric y-value (e.g., percentile)
+          const y = scales.y.getPixelForValue(options.yValue);
+          ctx.beginPath();
+          ctx.moveTo(chartArea.left, y);
+          ctx.lineTo(chartArea.right, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    };
+    Chart.register(userVLinePlugin);
 
     /**
      * Compute axis bounds given an array of values and a desired step size.
@@ -1046,7 +1138,104 @@
         netTitle = `Estimated Median Net Worth by Age (Individuals, 2025) – ${suffix}`;
       }
       document.getElementById('netWorthTitle').textContent = netTitle;
-      document.getElementById('scatterTitle').textContent = `Income vs Net Worth by Age (2025) – ${suffix}`;
+      document.getElementById('scatterTitle').textContent = `Income vs Net Worth by Age (2025) - ${suffix}`;
+      // Update percentile charts for current region using region-wide medians
+      let regionMedianNetWorth;
+      let regionMedianIncome;
+      const provinceIndex = baseProvinceLabels.indexOf(region);
+      const nationalMedianNetWorth = 652286; // projected national household median
+      const nationalMedianIncome = baseIncome[22];
+      if (region === 'Canada' || provinceIndex === -1) {
+        regionMedianNetWorth = nationalMedianNetWorth;
+        regionMedianIncome = nationalMedianIncome;
+      } else {
+        regionMedianNetWorth = baseProvinceValues[provinceIndex];
+        regionMedianIncome = Math.round((incomeRatios[region] || 1) * nationalMedianIncome);
+      }
+      // Estimate normal distribution parameters from anchor ratios
+      function estimateNormalParams(median, r10, r90) {
+        const z = 1.2815515655446004; // Phi^{-1}(0.90)
+        const x10 = median * r10;
+        const x90 = median * r90;
+        const s10 = (median - x10) / z;
+        const s90 = (x90 - median) / z;
+        const sigma = Math.max(1, (s10 + s90) / 2);
+        return { mu: median, sigma };
+      }
+      function normInv(p) {
+        // Acklam's approximation for inverse normal CDF
+        // https://web.archive.org/web/20150910044736/http://home.online.no/~pjacklam/notes/invnorm/
+        const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+        const b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
+        const c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+        const d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+        const plow = 0.02425; const phigh = 1 - plow;
+        let q, r;
+        if (p < plow) {
+          q = Math.sqrt(-2 * Math.log(p));
+          return (((((c[0]*q + c[1])*q + c[2])*q + c[3])*q + c[4])*q + c[5]) /
+                 ((((d[0]*q + d[1])*q + d[2])*q + d[3])*q + 1);
+        }
+        if (p > phigh) {
+          q = Math.sqrt(-2 * Math.log(1 - p));
+          return -(((((c[0]*q + c[1])*q + c[2])*q + c[3])*q + c[4])*q + c[5]) /
+                   ((((d[0]*q + d[1])*q + d[2])*q + d[3])*q + 1);
+        }
+        q = p - 0.5; r = q*q;
+        return (((((a[0]*r + a[1])*r + a[2])*r + a[3])*r + a[4])*r + a[5]) * q /
+               (((((b[0]*r + b[1])*r + b[2])*r + b[3])*r + b[4])*r + 1);
+      }
+      function buildNormalScatter(mu, sigma) {
+        const pts = [];
+        for (let p = 1; p <= 99; p++) {
+          const z = normInv(p/100);
+          let x = mu + sigma * z;
+          if (!isFinite(x)) x = mu;
+          if (x < 0) x = 0;
+          pts.push({ x, y: p });
+        }
+        return pts;
+      }
+      const netParams = estimateNormalParams(regionMedianNetWorth, 0.10, 1.80);
+      const incParams = estimateNormalParams(regionMedianIncome, 0.22, 2.44);
+      const netScatter = buildNormalScatter(netParams.mu, netParams.sigma);
+      const incScatter = buildNormalScatter(incParams.mu, incParams.sigma);
+      percentileNetWorthChartInstance.data.labels = percentileLabels;
+      percentileNetWorthChartInstance.data.datasets = [ { label: 'Net Worth by Percentile', data: netScatter, color: '#66bb6a', type: 'scatter', pointRadius: 2 } ];
+      percentileIncomeChartInstance.data.labels = percentileLabels;
+      percentileIncomeChartInstance.data.datasets = [ { label: 'Income by Percentile', data: incScatter, color: '#29b6f6', type: 'scatter', pointRadius: 2 } ];
+      // Axes: X in dollars, Y in percentile
+      percentileNetWorthChartInstance.options.scales = {
+        x: { type: 'linear', position: 'bottom', ticks: { color: '#b0c5e8', callback: (v)=> '$' + Math.round(v/1000).toLocaleString() + 'k', maxTicksLimit: 10 }, grid: { color: '#1f3a64' } },
+        y: { min: 0, max: 100, ticks: { color: '#b0c5e8', callback: (v)=> v + '%' }, grid: { color: '#1f3a64' } }
+      };
+      percentileIncomeChartInstance.options.scales = {
+        x: { type: 'linear', position: 'bottom', ticks: { color: '#b0c5e8', callback: (v)=> '$' + Math.round(v/1000).toLocaleString() + 'k', maxTicksLimit: 10 }, grid: { color: '#1f3a64' } },
+        y: { min: 0, max: 100, ticks: { color: '#b0c5e8', callback: (v)=> v + '%' }, grid: { color: '#1f3a64' } }
+      };
+      document.getElementById('percentileNetWorthTitle').textContent = `Net Worth by Percentile (2025) - ${suffix}`;
+      document.getElementById('percentileIncomeTitle').textContent = `Income by Percentile (2025) - ${suffix}`;
+      if (userActive) {
+        // Compute user percentile from normal CDF
+        function normCdf(z) { return 0.5 * (1 + erf(z/Math.SQRT2)); }
+        function erf(x) {
+          // Abramowitz and Stegun approximation
+          const sign = x < 0 ? -1 : 1; x = Math.abs(x);
+          const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+          const t = 1/(1 + p*x);
+          const y = 1 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+          return sign*y;
+        }
+        const netP = Math.max(0, Math.min(100, 100*normCdf((userNetWorthVal - netParams.mu)/netParams.sigma)));
+        const incP = Math.max(0, Math.min(100, 100*normCdf((userIncomeVal - incParams.mu)/incParams.sigma)));
+        percentileNetWorthChartInstance.options.plugins.userVLine = { yValue: netP, color: 'rgba(244,67,54,1)', dash: [6,3], width: 2 };
+        percentileIncomeChartInstance.options.plugins.userVLine = { yValue: incP, color: 'rgba(244,67,54,1)', dash: [6,3], width: 2 };
+      } else {
+        percentileNetWorthChartInstance.options.plugins.userVLine = { yValue: null };
+        percentileIncomeChartInstance.options.plugins.userVLine = { yValue: null };
+      }
+      percentileNetWorthChartInstance.update();
+      percentileIncomeChartInstance.update();
       document.getElementById('provinceTitle').textContent = `Projected Median Net Worth by Province (2025)`;
       document.getElementById('provinceIncomeTitle').textContent = `Median Income by Province (2025)`;
       // If the user has entered comparison data, replot the markers after updating the charts.
@@ -1323,6 +1512,21 @@ function createChart(canvasId, dataInfo, type = 'line') {
         datasets: [ { label: 'Median Income', data: baseProvinceIncomeValues, backgroundColor: '#42a5f5' } ],
         step: 5000
       }, 'bar');
+
+      // Initialize percentile charts as scatter: X=value, Y=percentile
+      percentileNetWorthChartInstance = createChart('percentileNetWorthChart', {
+        labels: percentileLabels,
+        datasets: [ { label: 'Net Worth by Percentile', data: [], color: '#66bb6a', type: 'scatter', pointRadius: 2 } ],
+        step: null
+      }, 'scatter');
+      percentileNetWorthChartInstance.options.plugins.userVLine = { yValue: null };
+
+      percentileIncomeChartInstance = createChart('percentileIncomeChart', {
+        labels: percentileLabels,
+        datasets: [ { label: 'Income by Percentile', data: [], color: '#29bbf6', type: 'scatter', pointRadius: 2 } ],
+        step: null
+      }, 'scatter');
+      percentileIncomeChartInstance.options.plugins.userVLine = { yValue: null };
       // Hook up the dropdown to update the charts when a region is selected
       const select = document.getElementById('provinceSelect');
       select.addEventListener('change', function() {
@@ -1406,6 +1610,28 @@ function createChart(canvasId, dataInfo, type = 'line') {
       addUserLineToBarChart(provinceIncomeChartInstance, userIncomeVal, 'You');
       // Add a red "You" point to the scatter chart (income vs net worth)
       addUserPointToScatter(scatterChartInstance, userIncomeVal, userNetWorthVal, 'You');
+      // Update vertical dashed user percentile lines on percentile charts
+      try {
+        const region = document.getElementById('provinceSelect').value;
+        // Rebuild percentile curves for current region
+        const provinceIndex = baseProvinceLabels.indexOf(region);
+        const nationalMedianNetWorth = 652286;
+        const nationalMedianIncome = baseIncome[22];
+        const regionMedianNetWorth = (region === 'Canada' || provinceIndex === -1) ? nationalMedianNetWorth : baseProvinceValues[provinceIndex];
+        const regionMedianIncome = (region === 'Canada' || provinceIndex === -1) ? nationalMedianIncome : Math.round((incomeRatios[region] || 1) * nationalMedianIncome);
+        // Estimate parameters and compute user's percentile via normal CDF
+        const z = 1.2815515655446004;
+        const sNet = ((regionMedianNetWorth - regionMedianNetWorth*0.10)/z + (regionMedianNetWorth*1.80 - regionMedianNetWorth)/z)/2;
+        const sInc = ((regionMedianIncome - regionMedianIncome*0.22)/z + (regionMedianIncome*2.44 - regionMedianIncome)/z)/2;
+        function erf(x){ const sign=x<0?-1:1; x=Math.abs(x); const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911; const t=1/(1+p*x); const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x); return sign*y; }
+        function normCdf(z){ return 0.5*(1+erf(z/Math.SQRT2)); }
+        const netP = Math.max(0, Math.min(100, 100*normCdf((userNetWorthVal - regionMedianNetWorth)/Math.max(1,sNet))));
+        const incP = Math.max(0, Math.min(100, 100*normCdf((userIncomeVal - regionMedianIncome)/Math.max(1,sInc))));
+        percentileNetWorthChartInstance.options.plugins.userVLine = { yValue: netP, color: 'rgba(244,67,54,1)', dash: [6,3], width: 2 };
+        percentileIncomeChartInstance.options.plugins.userVLine = { yValue: incP, color: 'rgba(244,67,54,1)', dash: [6,3], width: 2 };
+        percentileNetWorthChartInstance.update();
+        percentileIncomeChartInstance.update();
+      } catch (e) { /* no-op */ }
     }
 
     /**
@@ -1522,6 +1748,15 @@ function createChart(canvasId, dataInfo, type = 'line') {
       removeUserDataset(provinceChartInstance, 'You');
       removeUserDataset(provinceIncomeChartInstance, 'You');
       removeUserDataset(scatterChartInstance, 'You');
+      // Clear percentile chart vertical lines
+      if (percentileNetWorthChartInstance?.options?.plugins) {
+        percentileNetWorthChartInstance.options.plugins.userVLine = { index: null };
+        percentileNetWorthChartInstance.update();
+      }
+      if (percentileIncomeChartInstance?.options?.plugins) {
+        percentileIncomeChartInstance.options.plugins.userVLine = { index: null };
+        percentileIncomeChartInstance.update();
+      }
       // Rescale charts back to default ranges after removing user data
       const region = document.getElementById('provinceSelect').value;
       updateCharts(region);

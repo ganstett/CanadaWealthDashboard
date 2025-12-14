@@ -621,27 +621,17 @@
         </div>
         <div class="metric-card" id="netPctTile">
           <div class="metric-label">Net worth percentile</div>
-          <div id="netWorthPercentileValue" class="metric-value tile-value">—</div>
+          <div id="netWorthPercentileValue" class="metric-value tile-value">-</div>
           <div id="netWorthPercentileSubtext" class="metric-sub tile-sub">of peers</div>
-        </div>
-        <div class="metric-card" id="avgIncomeTile">
-          <div class="metric-label">Average income at selected age</div>
-          <div id="avgIncomeValue" class="metric-value tile-value">—</div>
-          <div id="avgIncomeSubtext" class="metric-sub tile-sub">for - ? age -</div>
         </div>
         <div class="metric-card" id="medianIncomeTile">
           <div class="metric-label">Median income at selected age</div>
-          <div id="medianIncomeValue" class="metric-value tile-value">—</div>
+          <div id="medianIncomeValue" class="metric-value tile-value">-</div>
           <div id="medianIncomeSubtext" class="metric-sub tile-sub">for - ? age -</div>
-        </div>
-        <div class="metric-card" id="avgNetWorthTile">
-          <div class="metric-label">Average net worth at selected age</div>
-          <div id="avgNetWorthValue" class="metric-value tile-value">—</div>
-          <div id="avgNetWorthSubtext" class="metric-sub tile-sub">for - ? age -</div>
         </div>
         <div class="metric-card" id="medianNetWorthTile">
           <div class="metric-label">Median net worth at selected age</div>
-          <div id="medianNetWorthValue" class="metric-value tile-value">—</div>
+          <div id="medianNetWorthValue" class="metric-value tile-value">-</div>
           <div id="medianNetWorthSubtext" class="metric-sub tile-sub">for - ? age -</div>
         </div>
       </div>
@@ -3233,7 +3223,8 @@
 function createChart(canvasId, dataInfo, type = 'line') {
   const ctx = document.getElementById(canvasId).getContext('2d');
   const axisLabels = dataInfo.axisLabels || {};
-  const tickFontSize = dataInfo.tickFontSize || 12;
+  const isMobile = window.matchMedia('(max-width: 700px)').matches;
+  const tickFontSize = dataInfo.tickFontSize || (isMobile ? 10 : 12);
   const axisTitleColor = '#e0e6ed';
 
   // - helpers -
@@ -3321,9 +3312,13 @@ function createChart(canvasId, dataInfo, type = 'line') {
     callback: function(value, index) { return labels[index]; }
   };
   if (type === 'bar') {
-    xTickOptions.autoSkip = false; xTickOptions.maxRotation = 45; xTickOptions.minRotation = 45;
+    xTickOptions.autoSkip = isMobile ? true : false;
+    xTickOptions.maxRotation = isMobile ? 30 : 45;
+    xTickOptions.minRotation = isMobile ? 0 : 45;
+    if (isMobile) xTickOptions.maxTicksLimit = 6;
   } else if (type !== 'scatter') {
-    xTickOptions.autoSkip = true; xTickOptions.maxTicksLimit = 10;
+    xTickOptions.autoSkip = true;
+    xTickOptions.maxTicksLimit = isMobile ? 6 : 10;
   }
 
   // Watermark colour: consistent faint blue across all charts
@@ -3334,6 +3329,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
     maintainAspectRatio: false,
     interaction: { mode: 'nearest', intersect: false },
     hover: { mode: 'nearest', intersect: false },
+    layout: { padding: { right: isMobile ? 18 : 12 } },
     scales: {
       x: {
         stacked: isStacked,
@@ -3349,7 +3345,8 @@ function createChart(canvasId, dataInfo, type = 'line') {
         font: { size: tickFontSize },
         callback: function(v){ const r = Math.round(v/1000)*1000; return '$' + r.toLocaleString(); },
         stepSize: dataInfo.step,
-        maxTicksLimit: dataInfo.step ? Math.ceil((yMax - yMin)/dataInfo.step) + 1 : undefined
+        maxTicksLimit: dataInfo.step ? Math.ceil((yMax - yMin)/dataInfo.step) + 1 : undefined,
+        autoSkip: isMobile ? true : undefined
       },
       grid: { color: '#1f3a64' }
       }
@@ -3410,7 +3407,8 @@ function createChart(canvasId, dataInfo, type = 'line') {
         color: '#b0c5e8',
         font: { size: tickFontSize },
         callback: function(v){ const r = Math.round(v/1000)*1000; return '$' + r.toLocaleString(); },
-        maxTicksLimit: 10
+        maxTicksLimit: isMobile ? 6 : 10,
+        autoSkip: isMobile ? true : undefined
       },
       grid: { color: '#1f3a64' }
     };
@@ -3420,7 +3418,9 @@ function createChart(canvasId, dataInfo, type = 'line') {
       ticks: {
         color: '#b0c5e8',
         font: { size: tickFontSize },
-        callback: function(v){ const r = Math.round(v/1000)*1000; return '$' + r.toLocaleString(); }
+        callback: function(v){ const r = Math.round(v/1000)*1000; return '$' + r.toLocaleString(); },
+        autoSkip: isMobile ? true : undefined,
+        maxTicksLimit: isMobile ? 6 : undefined
       },
       grid: { color: '#1f3a64' }
     };
@@ -4214,9 +4214,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
       tilesWrap.style.display = 'flex';
       setTile('incomePctTile', ordinal(incomePct), `among ${unitLabel} - age ${age}`);
       setTile('netPctTile', ordinal(netPct), `among ${unitLabel} - age ${age}`);
-      setTile('avgIncomeTile', incPcts ? formatCurrency(getAverageIncome(age, region, unit)) : '-', subtitle);
       setTile('medianIncomeTile', incPcts ? formatCurrency(incPcts.p50) : '-', subtitle);
-      setTile('avgNetWorthTile', netPcts ? formatCurrency(getAverageNetWorth(age, region, unit)) : '-', subtitle);
       setTile('medianNetWorthTile', netPcts ? formatCurrency(netPcts.p50) : '-', subtitle);
       // Savings rate and DTI tiles removed
     }

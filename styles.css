@@ -43,6 +43,16 @@ body {
   max-width: 1280px;
   margin: 0 auto;
 }
+/* Center the percentile/median tiles and auto-fit columns */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 14px auto 0;
+  justify-items: stretch;
+}
 
 /* Layout for the charts grid: two per row where space allows; collapse to one per row on narrow screens */
 .charts-grid {
@@ -200,19 +210,89 @@ select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
   }
 }
 /* Mobile-first fixes: ensure one chart per row with no empty side space */
-@media (max-width: 700px) {
+@media (max-width: 768px) {
+  html, body { width: 100%; overflow-x: hidden; }
+  .container {
+    width: 100%;
+    max-width: 100%;
+    padding: 12px 0 20px;
+    margin: 0 auto;
+  }
+  .content-width {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 12px;
+  }
+  .hero {
+    padding: 22px 12px 12px;
+    max-width: 100%;
+  }
+  .page-subtitle {
+    font-size: 16px;
+  }
+  /* Force single-column, full-width layout */
+  .charts-grid,
+  .profile-card,
+  .chart-card,
+  .chart-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
   .charts-grid {
     flex-direction: column !important;
     align-items: stretch !important;
     justify-content: flex-start !important;
-    gap: 18px !important;
-    padding: 0 10px;
+    gap: 14px !important;
+    padding: 0 8px;
+    width: 100%;
   }
   .chart-card {
     flex: 1 1 auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
     min-width: 0 !important;
     margin: 0 !important;
+    padding: 14px 14px 16px !important;
+    border-radius: 12px !important;
+  }
+  .chart-card h3 {
+    font-size: 0.92rem !important;
+    margin-bottom: 6px !important;
+  }
+  .chart-container {
+    aspect-ratio: 1.2 / 1 !important;
+    min-height: 320px;
+  }
+  .chart-card canvas {
+    max-width: 100% !important;
+  }
+  .top-controls {
+    align-items: stretch;
+    gap: 10px;
+  }
+  .controls-row,
+  .projection-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .controls-grid {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  .control-actions {
+    justify-content: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .control-actions button {
+    width: 100%;
+  }
+  .profile-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    box-sizing: border-box;
   }
 }

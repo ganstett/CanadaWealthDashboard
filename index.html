@@ -278,6 +278,7 @@
       max-width: 620px;
       min-width: 360px;
       position: relative;
+      overflow: visible;
     }
     .chart-card:hover {
       box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
@@ -285,7 +286,7 @@
     }
     .chart-card h3 {
       margin: 0 0 10px;
-      font-size: 1.4rem;
+      font-size: clamp(0.9rem, 1.9vw, 1.02rem);
       color: #00bfa5;
       display: flex;
       align-items: center;
@@ -358,23 +359,22 @@
     }
     .chart-footer-row{
       display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap:0px;
       margin-top: 8px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      position: relative;
     }
-    .chart-footer-row .download-btn{
-      margin: 0;
-      border-radius: 12px;
-      padding: 6px 10px;
-    }
+    .chart-footer-sources{ display:block; width:100%; }
     .chart-footer-row .source-box{
       margin: 0;
       padding: 8px 10px;
       border-radius: 12px;
-      flex: 1 1 auto;
-      min-width: 220px;
+      flex: none;
+      min-width: 0;
+      position: relative;
     }
     .chart-footer-row .source-box summary{
       font-size: 0.85rem;
@@ -382,11 +382,25 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .chart-footer-row .source-box .source-content{
+      display: none;
+      position: static;
+      width: 100%;
+      max-height: none;
+      overflow: visible;
+      margin-top: 10px;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      z-index: auto;
+      background: transparent;
+      border: none;
+    }
     .chart-footer-row .source-box[open]{
-      flex-basis: 100%;
+      flex-basis: auto;
     }
     .chart-footer-row .source-box[open] .source-content{
-      margin-top: 10px;
+      display: block;
     }
     .source-content {
       margin-top: 12px;
@@ -394,24 +408,6 @@
       font-size: 0.85rem;
       border-top: 1px solid var(--border-subtle);
       padding-top: 12px;
-    }
-    /* Tiny download button placed under each chart */
-    .download-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin: 8px 0 8px 8px;
-      padding: 4px 10px;
-      font-size: 0.78rem;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.04);
-      color: #9fb6c8;
-      cursor: pointer;
-    }
-    .download-btn:hover {
-      background: rgba(255,255,255,0.08);
-      color: #e0e6ed;
     }
     .source-content ul {
       margin-top: 4px;
@@ -488,6 +484,12 @@
     }
     .control-actions { display:flex; gap:12px; align-items:stretch; justify-content:flex-end; align-self:stretch; }
     .control-actions button { height:44px; padding: 0 14px; }
+    .input-warning{
+      margin-top:8px;
+      font-size:12px;
+      color:#fca5a5;
+      min-height: 16px;
+    }
     @media (max-width:1100px) {
       .controls-grid { grid-template-columns: 1fr 1fr 0.7fr 1fr 1fr; }
       .control-actions { grid-column: 1 / -1; justify-content:flex-end; margin-top:6px; }
@@ -604,6 +606,7 @@
           <button id="resetBtn" class="btn-primary btn-reset">Reset</button>
         </div>
       </div>
+      <div id="inputWarning" class="input-warning" aria-live="polite"></div>
     </div>
     </section>
     </div>
@@ -677,10 +680,10 @@
     <div class="content-width">
     <section id="section-income-charts">
     <div class="charts-grid">
-      <!-- Median Income Chart (2025 estimate) -->
+      <!-- Median Income Chart (2026 estimate) -->
       <div class="chart-card">
-        <h3 id="incomeTitle">Estimated Median Employment Income by Age (Individuals, 2025)
-          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Estimated 2025 employment income by age with percentile ranges."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows estimated 2025 employment income by age, including median and percentile ranges, adjusted for your selected province and household/individual view.</span></span>
+        <h3 id="incomeTitle">Estimated Median Employment Income by Age (Individuals, 2026)
+          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Estimated 2026 employment income by age with percentile ranges."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows estimated 2026 employment income by age, including median and percentile ranges, adjusted for your selected province and household/individual view.</span></span>
         </h3>
         <div class="chart-container">
           <canvas id="incomeChart"></canvas>
@@ -696,7 +699,7 @@
 
             <p><strong>Methods:</strong></p>
             <ul>
-              <li>2022 income levels are adjusted to 2025 based on recent wage growth and inflation guidance.</li>
+              <li>2022 income levels are adjusted to 2026 based on recent wage growth and inflation guidance.</li>
               <li>Statistics Canada publishes income by 5-year age brackets; values for individual ages are smoothed between these brackets.</li>
               <li>Percentiles (10th, 25th, median, 75th, 90th) are calculated by scaling the median pattern.</li>
               <li>Results update automatically when the user selects a different province or household/individual view.</li>
@@ -705,9 +708,9 @@
         </details>
       </div>
 
-      <!-- Income composition breakdown chart (2025) -->
+      <!-- Income composition breakdown chart (2026) -->
       <div class="chart-card">
-        <h3 id="compositionTitle">Median Income Composition by Age (Households, 2025)
+        <h3 id="compositionTitle">Median Income Composition by Age (Households, 2026)
           <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Income composition by age."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows how employment income, investment income, pensions, and transfers contribute to total income at each age.</span></span>
         </h3>
         <div class="chart-container">
@@ -738,10 +741,10 @@
 
     <section id="section-networth-charts">
       <div class="charts-grid">
-      <!-- Median Net Worth Chart (2025 estimate) -->
+      <!-- Median Net Worth Chart (2026 estimate) -->
       <div class="chart-card">
-        <h3 id="netWorthTitle">Estimated Median Net Worth by Age (Households, 2025)
-          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Estimated 2025 net worth by age with percentile ranges."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows estimated 2025 median net worth by age, including typical accumulation during working years and gradual drawdown in retirement, adjusted for your selected province and household/individual view.</span></span>
+        <h3 id="netWorthTitle">Estimated Median Net Worth by Age (Households, 2026)
+          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Estimated 2026 net worth by age with percentile ranges."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows estimated 2026 median net worth by age, including typical accumulation during working years and gradual drawdown in retirement, adjusted for your selected province and household/individual view.</span></span>
         </h3>
         <div class="chart-container">
           <canvas id="netWorthChart"></canvas>
@@ -758,7 +761,7 @@
             <p><strong>Methods:</strong></p>
             <ul>
               <li>Statistics Canada publishes net worth by broad age groups; a smooth curve is created for single ages by estimating the change between these groups.</li>
-              <li>The curve is projected to 2025 using inflation expectations.</li>
+              <li>The curve is projected to 2026 using inflation expectations.</li>
               <li>After around age 65, values gradually decrease to reflect typical retirement drawdown.</li>
               <li>Percentiles (10th, 25th, median, 75th, 90th) are created by scaling the median pattern.</li>
               <li>Results update automatically based on the selected province and household/individual view.</li>
@@ -767,9 +770,9 @@
         </details>
       </div>
 
-      <!-- Income vs Net Worth Scatter Plot (2025) -->
+      <!-- Income vs Net Worth Scatter Plot (2026) -->
       <div class="chart-card">
-        <h3 id="scatterTitle">Income vs Net Worth by Age (2025)
+        <h3 id="scatterTitle">Median Income vs Net Worth by Age (Households, 2026) - Canada
           <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Income and net worth relationship by age."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows how median income at each age relates to median net worth, using consistent smoothing and inflation adjustments.</span></span>
         </h3>
         <div class="chart-container">
@@ -795,8 +798,8 @@
 
       <!-- Net Worth Distribution (Histogram) -->
       <div class="chart-card">
-        <h3 id="percentileNetWorthTitle">Net Worth Distribution (Histogram, 2025)
-          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Net worth distribution histogram."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows the estimated distribution of household net worth in 2025 for your selected province and household/individual view.</span></span>
+        <h3 id="percentileNetWorthTitle">Net Worth Distribution (Histogram, 2026)
+          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Net worth distribution histogram."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows the estimated distribution of household net worth in 2026 for your selected province and household/individual view.</span></span>
         </h3>
         <div class="chart-container">
           <canvas id="percentileNetWorthChart"></canvas>
@@ -813,7 +816,7 @@
             <p><strong>Methods:</strong></p>
             <ul>
               <li>Percentile points across the wealth distribution are used to build a smooth distribution curve.</li>
-              <li>This curve is divided into evenly sized bins to show the estimated distribution of net worth in 2025.</li>
+              <li>This curve is divided into evenly sized bins to show the estimated distribution of net worth in 2026.</li>
               <li>Values update when selecting a different province or household/individual view.</li>
             </ul>
           </div>
@@ -822,8 +825,8 @@
 
       <!-- Income Distribution (Histogram) -->
       <div class="chart-card">
-        <h3 id="percentileIncomeTitle">Income Distribution (Histogram, 2025)
-          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Income distribution histogram."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows the estimated distribution of employment income in 2025 for your selected province and household/individual view.</span></span>
+        <h3 id="percentileIncomeTitle">Income Distribution (Histogram, 2026)
+          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Income distribution histogram."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows the estimated distribution of employment income in 2026 for your selected province and household/individual view.</span></span>
         </h3>
         <div class="chart-container">
           <canvas id="percentileIncomeChart"></canvas>
@@ -849,7 +852,7 @@
 
       <!-- Wealth Composition by Age (stacked area) -->
       <div class="chart-card">
-        <h3 id="wealthCompositionTitle">Wealth Composition by Age (2025)
+        <h3 id="wealthCompositionTitle">Median Wealth Composition by Age (Households, 2026)
           <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Wealth composition by age."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows how real estate, financial assets, pensions, and debt typically change with age, along with resulting net worth.</span></span>
         </h3>
         <div class="chart-container">
@@ -876,7 +879,7 @@
 
       <!-- Income Percentile by Gender -->
       <div class="chart-card">
-        <h3 id="genderIncomeTitle">Income Percentile by Gender (2025)
+        <h3 id="genderIncomeTitle">Income Percentile by Gender (2026)
           <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Median income by gender and age."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Compares women's and men's median employment income by age, adjusted for province and household/individual view.</span></span>
         </h3>
         <div class="chart-container">
@@ -900,10 +903,10 @@
         </details>
       </div>
 
-      <!-- Projected Median Net Worth by Province (2025) -->
+      <!-- Projected Median Net Worth by Province (2026) -->
       <div class="chart-card">
-        <h3 id="provinceTitle">Projected Median Net Worth by Province (2025)
-          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Projected 2025 median net worth by province with percentile whiskers."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows projected 2025 median net worth by province, with whiskers marking the 10th and 90th percentile ranges.</span></span>
+        <h3 id="provinceTitle">Projected Median Net Worth by Province (2026)
+          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Projected 2026 median net worth by province with percentile whiskers."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows projected 2026 median net worth by province, with whiskers marking the 10th and 90th percentile ranges.</span></span>
         </h3>
         <div class="chart-container">
           <canvas id="provinceChart"></canvas>
@@ -919,7 +922,7 @@
 
             <p><strong>Methods:</strong></p>
             <ul>
-              <li>Provincial net worth medians are projected to 2025 in constant dollars.</li>
+              <li>Provincial net worth medians are projected to 2026 in constant dollars.</li>
               <li>Percentile ranges are shown as whiskers for the 10th and 90th percentiles.</li>
               <li>Values adjust for household/individual view selection.</li>
             </ul>
@@ -927,10 +930,10 @@
         </details>
       </div>
 
-      <!-- Median Income by Province (2025) -->
+      <!-- Median Income by Province (2026) -->
       <div class="chart-card">
-        <h3 id="provinceIncomeTitle">Median Income by Province (2025)
-          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Median income by province with percentile whiskers."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows median employment income across provinces in 2025, with whiskers marking the 10th and 90th percentile ranges.</span></span>
+        <h3 id="provinceIncomeTitle">Median Income by Province (2026)
+          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Median income by province with percentile whiskers."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows median employment income across provinces in 2026, with whiskers marking the 10th and 90th percentile ranges.</span></span>
         </h3>
         <div class="chart-container">
           <canvas id="provinceIncomeChart"></canvas>
@@ -1078,14 +1081,11 @@
         if (isHistogram && tooltip.dataPoints && tooltip.dataPoints.length) {
           const dp = tooltip.dataPoints[0];
           const valX = dp.parsed?.x ?? 0;
-          const distParams = chart.options?.plugins?.distParams || { mu: 0, sigma: 1 };
-          const sigmaSafe = Math.max(1, distParams.sigma || 1);
-          const z = (valX - (distParams.mu || 0)) / sigmaSafe;
-          const erf = (x)=>{ const sign=x<0?-1:1; x=Math.abs(x); const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911; const t=1/(1+p*x); const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x); return sign*y; };
-          const normCdf = (v)=> 0.5*(1+erf(v/Math.SQRT2));
-          const pct = Math.max(0, Math.min(100, 100*normCdf(z)));
-          const toOrdinal = (n)=>{n=Math.round(n); const s=['th','st','nd','rd']; const v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]);};
-          const valueLabel = `${fmtDollar(valX)} - ${toOrdinal(pct)} percentile`;
+        const distCurve = chart.options?.plugins?.distCurve;
+        const pctIdx = (distCurve && distCurve.length) ? findPercentileIndex(valX, distCurve) : 0;
+        const pct = Math.min(99, Math.max(1, pctIdx + 1));
+        const toOrdinal = (n)=>{n=Math.round(n); const s=['th','st','nd','rd']; const v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]);};
+        const valueLabel = `${fmtDollar(valX)} - ${toOrdinal(pct)} percentile`;
           let html = '<div class="tt-body">';
           const color = dp.element?.options?.borderColor || dp.dataset?.borderColor || dp.dataset?.backgroundColor || '#29b6f6';
           html += `<div class="tt-row highlight"><div class="tt-swatch" style="background:${color};"></div><div><div class="tt-label">${dp.dataset?.label || ''}</div><div class="tt-value">${valueLabel}</div></div></div>`;
@@ -1200,10 +1200,28 @@
               if (m) return Math.max(0, 100 - parseInt(m[1], 10)); // higher percentile first
               return 500 + datasetIndex; // default stable order after percentiles
             };
-            const sortedItems = bodyItems.slice().sort((a, b) =>
-              percentileOrder(a.dataset?.label || a.label, a.datasetIndex ?? 999) -
-              percentileOrder(b.dataset?.label || b.label, b.datasetIndex ?? 999)
-            );
+            const isGenderChart = chart?.canvas?.id === 'genderIncomeChart';
+            const sortedItems = bodyItems.slice().sort((a, b) => {
+              if (isGenderChart) {
+                const key = (it) => String(it?.dataset?.label || it?.label || '').toLowerCase().trim();
+                const rankMap = new Map([
+                  ['men p90', 0],
+                  ['women p90', 1],
+                  ['men (median)', 2],
+                  ['women (median)', 3],
+                  ['men p10', 4],
+                  ['women p10', 5],
+                ]);
+                const ra = rankMap.has(key(a)) ? rankMap.get(key(a)) : 999;
+                const rb = rankMap.has(key(b)) ? rankMap.get(key(b)) : 999;
+                if (ra !== rb) return ra - rb;
+                return String(a?.dataset?.label || a?.label || '').localeCompare(String(b?.dataset?.label || b?.label || ''));
+              }
+              return (
+                percentileOrder(a.dataset?.label || a.label, a.datasetIndex ?? 999) -
+                percentileOrder(b.dataset?.label || b.label, b.datasetIndex ?? 999)
+              );
+            });
             const highlightItem = (closestIndex >=0) ? bodyItems[closestIndex] : null;
             const highlightIndex = highlightItem ? sortedItems.indexOf(highlightItem) : -1;
             html += '<div class="tt-body">';
@@ -1991,7 +2009,7 @@
     // logic for updating income and net worth charts based on region,
     // unit (households vs individuals), selected percentiles and user
     // input.  See ChartUpdater class definition for details.
-    const chartUpdater = new ChartUpdater(metricsRegistry, {
+  const chartUpdater = new ChartUpdater(metricsRegistry, {
       income: incomeRatios,
       netWorth: netWorthRatios
     });
@@ -2230,16 +2248,136 @@
         ctx.restore();
       }
     };
+
+    // Inline labels drawn at the end of each visible line dataset
+    const inlineLineLabels = {
+      id: 'inlineLineLabels',
+      afterDatasetsDraw(chart) {
+        const { ctx, data, chartArea } = chart || {};
+        if (!ctx || !chartArea || !data?.datasets?.length) return;
+        const viewWidth = chart?.canvas?.ownerDocument?.defaultView?.innerWidth || (typeof window !== 'undefined' ? window.innerWidth : 1200);
+        const fontSize = viewWidth <= 640 ? 10 : 11;
+        const fontFamily = 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+        const padding = 6;
+        const collisionPad = 12;
+        const placed = [];
+
+        data.datasets.forEach((ds, datasetIndex) => {
+          if (ds?.inlineLabel === false) return;
+          const meta = chart.getDatasetMeta(datasetIndex);
+          const isLineType = meta && (meta.type === 'line' || ds.type === 'line' || ds.showLine === true);
+          if (!meta || meta.hidden || !isLineType) return;
+
+          const points = meta.data || [];
+          let pt = null;
+          for (let i = points.length - 1; i >= 0; i--) {
+            const candidate = points[i];
+            if (!candidate) continue;
+            const pos = typeof candidate.tooltipPosition === 'function' ? candidate.tooltipPosition() : candidate;
+            const parsed = candidate.$context?.parsed?.y ?? candidate.parsed?.y ?? candidate.parsed ?? null;
+            if (pos && Number.isFinite(pos.x) && Number.isFinite(pos.y) && parsed !== null && parsed !== undefined && !Number.isNaN(parsed)) {
+              pt = pos;
+              break;
+            }
+          }
+          if (!pt) return;
+          const label = ds.label;
+          if (!label) return;
+
+          const colorCandidate = Array.isArray(ds.borderColor) ? ds.borderColor[0] : ds.borderColor;
+          const fallbackBg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[0] : ds.backgroundColor;
+          const textColor = (typeof colorCandidate === 'string' && colorCandidate) ||
+                            (typeof fallbackBg === 'string' && fallbackBg) ||
+                            '#e0e6ed';
+
+          ctx.save();
+          ctx.font = `${fontSize}px ${fontFamily}`;
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = textColor;
+          ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+          ctx.lineWidth = 3;
+
+          const metrics = ctx.measureText(label);
+          const textW = metrics.width;
+          const textH = (metrics.actualBoundingBoxAscent || fontSize * 0.72) + (metrics.actualBoundingBoxDescent || fontSize * 0.28);
+          const rightLimit = chartArea.right - 2;
+          let x = pt.x + padding;
+          let align = 'left';
+          if (x + textW > rightLimit) {
+            x = pt.x - padding;
+            align = 'right';
+          }
+          const topLimit = chartArea.top + textH / 2 + 2;
+          const bottomLimit = chartArea.bottom - textH / 2 - 2;
+          let y = Math.min(Math.max(pt.y, topLimit), bottomLimit);
+
+          let iteration = 0;
+          while (iteration < 6) {
+            const conflict = placed.find(p => Math.abs(p.y - y) < collisionPad && Math.abs(p.x - x) < textW + collisionPad);
+            if (!conflict) break;
+            const direction = iteration % 2 === 0 ? 1 : -1;
+            y = Math.min(Math.max(y + direction * collisionPad, topLimit), bottomLimit);
+            iteration++;
+          }
+
+          ctx.textAlign = align;
+          ctx.strokeText(label, x, y);
+          ctx.fillText(label, x, y);
+          ctx.restore();
+          placed.push({ x, y, w: textW, h: textH });
+        });
+      }
+    };
+
     Chart.register(wealthDashboardWatermark);
-    // Global padding to reserve a bottom safe zone for x-axis labels and avoid watermark overlap
+    Chart.register(inlineLineLabels);
+    // Force the wealth composition net worth line to always render on top
+    const wealthNetWorthTopLayer = {
+      id: 'wealthNetWorthTopLayer',
+      afterDatasetsDraw(chart) {
+        if (!chart?.canvas || chart.canvas.id !== 'wealthCompositionChart') return;
+        const dsIndex = chart.data?.datasets?.findIndex(ds => ds.label === 'Median Net Worth');
+        if (dsIndex == null || dsIndex < 0) return;
+        const meta = chart.getDatasetMeta(dsIndex);
+        const ctx = chart.ctx;
+        if (!meta || !ctx) return;
+        if (meta.dataset?.draw) meta.dataset.draw(ctx);
+        if (Array.isArray(meta.data)) {
+          meta.data.forEach(el => el?.draw?.(ctx));
+        }
+      }
+    };
+    Chart.register(wealthNetWorthTopLayer);
+    // Global padding to reserve a bottom safe zone and right gutter for inline labels
+    Chart.defaults.plugins = Chart.defaults.plugins || {};
+    Chart.defaults.plugins.legend = Chart.defaults.plugins.legend || {};
+    Chart.defaults.plugins.legend.display = false;
     Chart.defaults.layout = Chart.defaults.layout || {};
     const existingPad = Chart.defaults.layout.padding || {};
     Chart.defaults.layout.padding = {
       top: existingPad.top ?? 8,
-      right: existingPad.right ?? 10,
+      right: Math.max(existingPad.right ?? 0, 34),
       bottom: Math.max(existingPad.bottom ?? 0, 12),
       left: existingPad.left ?? 10
     };
+
+    const allCharts = window.allCharts = window.allCharts || [];
+    const triggerAllChartUpdates = (() => {
+      let handle;
+      return () => {
+        clearTimeout(handle);
+        handle = setTimeout(() => {
+          allCharts.forEach(ch => {
+            if (ch && typeof ch.update === 'function') {
+              try { ch.update(); } catch (e) { /* no-op */ }
+            }
+          });
+        }, 180);
+      };
+    })();
+
+    window.addEventListener('resize', triggerAllChartUpdates, { passive: true });
+    window.addEventListener('orientationchange', triggerAllChartUpdates, { passive: true });
 
     /**
      * Performance timing utility for iterative optimization.
@@ -2454,13 +2592,22 @@
       // Update gender income chart using CIS-derived female-to-male ratio (~0.88 nationwide)
       const womenRatio = 0.88;
       const menRatio = 1.00;
-      const womenIncome = baseIncome.map(v => Math.round(v * incomeRatio * (unit==='households' ? EQUIVALENCE_SCALE : 1) * womenRatio));
-      const menIncome = baseIncome.map(v => Math.round(v * incomeRatio * (unit==='households' ? EQUIVALENCE_SCALE : 1) * menRatio));
+      const scaleFactor = incomeRatio * (unit==='households' ? EQUIVALENCE_SCALE : 1);
+      const womenIncome = baseIncome.map(v => Math.round(v * scaleFactor * womenRatio));
+      const menIncome = baseIncome.map(v => Math.round(v * scaleFactor * menRatio));
+      const womenP10 = baseIncomeP10.map(v => Math.round(v * scaleFactor * womenRatio));
+      const womenP90 = baseIncomeP90.map(v => Math.round(v * scaleFactor * womenRatio));
+      const menP10 = baseIncomeP10.map(v => Math.round(v * scaleFactor * menRatio));
+      const menP90 = baseIncomeP90.map(v => Math.round(v * scaleFactor * menRatio));
       genderIncomeChartInstance.data.labels = ageLabels;
-      genderIncomeChartInstance.data.datasets[0].data = womenIncome;
-      genderIncomeChartInstance.data.datasets[1].data = menIncome;
-      // Force axes to start at zero
-      let gVals = womenIncome.concat(menIncome);
+      genderIncomeChartInstance.data.datasets[0].data = womenP10;
+      genderIncomeChartInstance.data.datasets[1].data = womenP90;
+      genderIncomeChartInstance.data.datasets[2].data = menP10;
+      genderIncomeChartInstance.data.datasets[3].data = menP90;
+      genderIncomeChartInstance.data.datasets[4].data = womenIncome;
+      genderIncomeChartInstance.data.datasets[5].data = menIncome;
+      // Force axes to start at zero and include percentile bands for range
+      let gVals = womenIncome.concat(menIncome, womenP10, womenP90, menP10, menP90);
       const gAxis = computeAxis(gVals, 5000);
       genderIncomeChartInstance.options.scales.y.min = 0;
       genderIncomeChartInstance.options.scales.y.max = gAxis.max;
@@ -2609,6 +2756,18 @@
         wealthCompositionChartInstance.data.datasets[2].data = pen;
         wealthCompositionChartInstance.data.datasets[3].data = deb;
         wealthCompositionChartInstance.data.datasets[4].data = net;
+        wealthCompositionChartInstance.data.datasets[4].borderColor = '#ffffff';
+        wealthCompositionChartInstance.data.datasets[4].backgroundColor = 'transparent';
+        wealthCompositionChartInstance.data.datasets[4].borderWidth = 2;
+        wealthCompositionChartInstance.data.datasets[4].order = 9999;
+        wealthCompositionChartInstance.data.datasets[4].z = 99;
+        wealthCompositionChartInstance.data.datasets[4].fill = false;
+        // Force net worth line to be the last drawn dataset
+        const netDs = wealthCompositionChartInstance.data.datasets.find(ds => ds.label === 'Median Net Worth');
+        if (netDs) {
+          wealthCompositionChartInstance.data.datasets = wealthCompositionChartInstance.data.datasets.filter(ds => ds !== netDs);
+          wealthCompositionChartInstance.data.datasets.push(netDs);
+        }
         // Stacking: assets vs debts separated
         wealthCompositionChartInstance.options.scales.y.stacked = true;
         wealthCompositionChartInstance.options.scales.x.stacked = true;
@@ -2700,7 +2859,14 @@
             stepSize: 5000,
             maxTicksLimit: 10
           },
-          grid: { color: '#1f3a64' }
+          grid: { color: '#1f3a64' },
+          title: {
+            display: true,
+            text: unit === 'households'
+              ? 'Median Employment Income ($ - Households)'
+              : 'Median Employment Income ($ - Individuals)',
+            color: '#e0e6ed'
+          }
         },
         y: {
           min: yAxis.min,
@@ -2748,7 +2914,10 @@
       // Update bar data and colours
       barDataset.data = baseProvinceValues.slice();
       barDataset.backgroundColor = barColors;
+      barDataset.borderColor = barColors;
+      barDataset.borderWidth = 0;
       barDataset.order = 1;
+      barDataset.z = 0;
       // For province chart we display the median as bars and draw whiskers
       // representing the 10th and 90th percentiles via a drawing plugin.
       // Choose base values according to unit (households vs individuals).
@@ -2867,7 +3036,7 @@
       const wealthTitleEl = document.getElementById('wealthCompositionTitle');
       if (wealthTitleEl) {
         const wealthIcon = wealthTitleEl.querySelector('.info-icon');
-        wealthTitleEl.textContent = `Wealth Composition by Age (${unitTitle}, ${BASE_YEAR})`;
+        wealthTitleEl.textContent = `Median Wealth Composition by Age (${unitTitle}, ${BASE_YEAR})`;
         if (wealthIcon) wealthTitleEl.appendChild(wealthIcon);
       }
       
@@ -2882,7 +3051,7 @@
       // Update scatter title - preserve info-icon
       const scatterTitleEl = document.getElementById('scatterTitle');
       const scatterIcon = scatterTitleEl.querySelector('.info-icon');
-      scatterTitleEl.textContent = `Income vs Net Worth by Age (Median, ${BASE_YEAR}) - ${suffix}`;
+      scatterTitleEl.textContent = `Median Income vs Net Worth by Age (${unitTitle}, ${BASE_YEAR}) - ${suffix}`;
       if (scatterIcon) scatterTitleEl.appendChild(scatterIcon);
       // Update percentile charts for current region using region-wide medians
       let regionMedianNetWorth;
@@ -2960,11 +3129,11 @@
       percentileIncomeChartInstance.data.datasets = [ { label: 'Income Distribution', data: incHist.points, backgroundColor: '#29b6f6' } ];
       // Axes: X in dollars (linear), Y in percent probability
       percentileNetWorthChartInstance.options.scales = {
-        x: { type: 'linear', position: 'bottom', ticks: { color: '#b0c5e8', callback: (v)=> '$' + Math.round(v/1000).toLocaleString() + 'k', maxTicksLimit: 10 }, grid: { color: '#1f3a64' }, min: netHist.minX, max: netHist.maxX, title: { display: true, text: unit === 'households' ? 'Net Worth ($ - Households)' : 'Net Worth ($ - Individuals)', color: '#e0e6ed' } },
+        x: { type: 'linear', position: 'bottom', ticks: { color: '#b0c5e8', callback: (v)=> '$' + Math.round(v/1000).toLocaleString() + 'k', maxTicksLimit: 10 }, grid: { color: '#1f3a64' }, min: netHist.minX, max: netHist.maxX, title: { display: true, text: 'Net Worth ($)', color: '#e0e6ed' } },
         y: { min: 0, ticks: { color: '#b0c5e8', callback: (v)=> v + '%' }, grid: { color: '#1f3a64' } }
       };
       percentileIncomeChartInstance.options.scales = {
-        x: { type: 'linear', position: 'bottom', ticks: { color: '#b0c5e8', callback: (v)=> '$' + Math.round(v/1000).toLocaleString() + 'k', maxTicksLimit: 10 }, grid: { color: '#1f3a64' }, min: incHist.minX, max: incHist.maxX, title: { display: true, text: unit === 'households' ? 'Employment Income ($ - Households)' : 'Employment Income ($ - Individuals)', color: '#e0e6ed' } },
+        x: { type: 'linear', position: 'bottom', ticks: { color: '#b0c5e8', callback: (v)=> '$' + Math.round(v/1000).toLocaleString() + 'k', maxTicksLimit: 10 }, grid: { color: '#1f3a64' }, min: incHist.minX, max: incHist.maxX, title: { display: true, text: 'Employment Income ($)', color: '#e0e6ed' } },
         y: { min: 0, ticks: { color: '#b0c5e8', callback: (v)=> v + '%' }, grid: { color: '#1f3a64' } }
       };
       // Save dist params for tooltips
@@ -2973,13 +3142,17 @@
       // Draw a subtle median line on both distributions
       percentileNetWorthChartInstance.options.plugins.medianVLine = { xValue: netParams.mu, color: 'rgba(255,255,255,0.6)', dash: [2,2], width: 1, label: 'Median' };
       percentileIncomeChartInstance.options.plugins.medianVLine = { xValue: incParams.mu, color: 'rgba(255,255,255,0.6)', dash: [2,2], width: 1, label: 'Median' };
-      // Custom tooltip for histograms (percent at $x)
+      // Cache percentile curves for histogram percentile lookups (align with tiles)
+      const netCurve = makePercentileValues(regionMedianNetWorth, netWorthPercentileAnchors);
+      const incCurve = makePercentileValues(regionMedianIncome, incomePercentileAnchors);
+      percentileNetWorthChartInstance.options.plugins.distCurve = netCurve;
+      percentileIncomeChartInstance.options.plugins.distCurve = incCurve;
+      // Custom tooltip for histograms (percent at $x) using curve inversion
       const histLabelPctile = (ctx) => {
         const x = ctx.parsed?.x ?? 0;
-        const dp = ctx?.chart?.options?.plugins?.distParams || { mu: 0, sigma: 1 };
-        function erf(x){ const sign=x<0?-1:1; x=Math.abs(x); const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911; const t=1/(1+p*x); const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x); return sign*y; }
-        function normCdf(z){ return 0.5*(1+erf(z/Math.SQRT2)); }
-        const pct = Math.max(0, Math.min(100, 100*normCdf((x - dp.mu)/Math.max(1, dp.sigma))));
+        const curve = ctx?.chart?.options?.plugins?.distCurve || [];
+        const idx = curve.length ? findPercentileIndex(x, curve) : 0;
+        const pct = clampPercentile(idx + 1);
         const toOrdinal = (n)=>{n=Math.round(n); const s=['th','st','nd','rd']; const v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]);};
         return `Percentile: ${toOrdinal(pct)} - $${Math.round(x).toLocaleString()}`;
       };
@@ -2990,19 +3163,37 @@
       // Update histogram titles - preserve info-icons
       const netWorthHistEl = document.getElementById('percentileNetWorthTitle');
       const netWorthHistIcon = netWorthHistEl.querySelector('.info-icon');
-      netWorthHistEl.textContent = `Net Worth Distribution (Histogram, ${BASE_YEAR}) - ${suffix}`;
+      netWorthHistEl.textContent = `Net Worth Distribution (${unitTitle}, ${BASE_YEAR}) - ${suffix}`;
       if (netWorthHistIcon) netWorthHistEl.appendChild(netWorthHistIcon);
       
       const incomeHistEl = document.getElementById('percentileIncomeTitle');
       const incomeHistIcon = incomeHistEl.querySelector('.info-icon');
-      incomeHistEl.textContent = `Income Distribution (Histogram, ${BASE_YEAR}) - ${suffix}`;
+      incomeHistEl.textContent = `Income Distribution (${unitTitle}, ${BASE_YEAR}) - ${suffix}`;
       if (incomeHistIcon) incomeHistEl.appendChild(incomeHistIcon);
       if (userActive) {
-        // Draw vertical line at user's value on histograms with percentile labels
-        function erf(x){ const sign=x<0?-1:1; x=Math.abs(x); const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911; const t=1/(1+p*x); const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x); return sign*y; }
-        function normCdf(z){ return 0.5*(1+erf(z/Math.SQRT2)); }
-        const netPct = Math.max(0, Math.min(100, 100*normCdf((userNetWorthVal - netParams.mu)/Math.max(1,netParams.sigma))));
-        const incPct = Math.max(0, Math.min(100, 100*normCdf((userIncomeVal - incParams.mu)/Math.max(1,incParams.sigma))));
+        // Draw vertical line at user's value on histograms with percentile labels using the same thresholds as tiles
+        const ageForPct = Math.max(18, Math.min(80, userAgeVal || 18));
+        const idxPct = ageForPct - 18;
+        const incPcts = getScaledIncomePercentiles(idxPct, region, unit);
+        const netPcts = getScaledNetWorthPercentiles(idxPct, region, unit);
+        const incThresh = [
+          {p:10, v: incPcts.p10},
+          {p:25, v: incPcts.p25},
+          {p:50, v: incPcts.p50},
+          {p:75, v: incPcts.p75},
+          {p:90, v: incPcts.p90},
+          {p:99, v: baseTotalIncomeP99[idxPct] * (incomeRatios[region] || 1) * (unit==='households'? EQUIVALENCE_SCALE:1)}
+        ];
+        const netThresh = [
+          {p:10, v: netPcts.p10},
+          {p:25, v: netPcts.p25},
+          {p:50, v: netPcts.p50},
+          {p:75, v: netPcts.p75},
+          {p:90, v: netPcts.p90},
+          {p:99, v: (unit==='households' ? baseNetWorthP99[idxPct] : baseIndNetWorthP99[idxPct]) * (netWorthRatios[region] || 1)}
+        ];
+        const incPct = clampPercentile(computePercentileFromThresholds(userIncomeVal, incThresh));
+        const netPct = clampPercentile(computePercentileFromThresholds(userNetWorthVal, netThresh));
         const toOrdinal = (n)=>{n=Math.round(n); const s=['th','st','nd','rd']; const v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]);};
         percentileNetWorthChartInstance.options.plugins.userVLine = { xValue: userNetWorthVal, color: 'rgba(244,67,54,1)', dash: [6,3], width: 2, label: `You: ${toOrdinal(netPct)} percentile` };
         percentileIncomeChartInstance.options.plugins.userVLine = { xValue: userIncomeVal, color: 'rgba(244,67,54,1)', dash: [6,3], width: 2, label: `You: ${toOrdinal(incPct)} percentile` };
@@ -3026,6 +3217,10 @@
       // If the user has entered comparison data, replot the markers after updating the charts.
       if (userActive) {
         addUserMarkers();
+      }
+      // Refresh summary tiles if user data is present
+      if (userActive) {
+        try { showYouVsEveryone(); } catch (e) { /* no-op */ }
       }
     }
 
@@ -3082,7 +3277,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
   const isStacked = type !== 'scatter' && dataInfo.datasets.some(ds => ds.stack);
 
   // Build datasets w/ safe colors + optional gradient fill
-  const datasets = dataInfo.datasets.map((ds) => {
+    const datasets = dataInfo.datasets.map((ds) => {
     const stroke = ds.borderColor || ds.color || '#29b6f6';
     let fillColor = ds.backgroundColor || (ds.fill ? toRGBA(stroke, ds.fillOpacity ?? 0.35) : 'transparent');
 
@@ -3101,17 +3296,20 @@ function createChart(canvasId, dataInfo, type = 'line') {
       data: ds.data,
       borderColor: stroke,
       backgroundColor: fillColor,
-      borderWidth: ds.borderWidth || 2,
+      borderWidth: ds.borderWidth ?? 2,
       tension: ds.tension ?? 0.3,
-      fill: !!(ds.fill || ds.stack),
+      fill: ds.fill !== undefined ? ds.fill : !!(ds.stack),
       stack: ds.stack || undefined,
       type: ds.type || undefined,
       pointRadius: ds.pointRadius ?? (type==='scatter' ? 4 : 2),
       pointHoverRadius: ds.pointHoverRadius ?? (type==='scatter' ? 5 : 5),
       pointHitRadius: ds.pointHitRadius ?? 10,
       borderDash: ds.borderDash || undefined,
-      order: ds.order || 1,
-      showLine: ds.showLine
+      order: ds.order ?? 1,
+      showLine: ds.showLine,
+      inlineLabel: ds.inlineLabel,
+      tooltip: ds.tooltip,
+      noGradient: ds.noGradient
     };
   });
 
@@ -3157,10 +3355,10 @@ function createChart(canvasId, dataInfo, type = 'line') {
       }
     },
     plugins: {
-    legend: {
-      display: (canvasId === 'netWorthChart') ? true : (datasets.length > 1),
-      labels: { color: '#e0e6ed', usePointStyle: true }
-    },
+      legend: {
+        display: false,
+        labels: { color: '#e0e6ed', usePointStyle: true }
+      },
       tooltip: {
         // Use index mode so the tooltip includes all series for the hovered age
         mode: 'index',
@@ -3255,6 +3453,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
   }
 
   const chartInstance = new Chart(ctx, { type, data: { labels, datasets }, options });
+  if (!allCharts.includes(chartInstance)) allCharts.push(chartInstance);
   chartInstance.__step = dataInfo.step || null;
   return chartInstance;
 }
@@ -3278,6 +3477,25 @@ function createChart(canvasId, dataInfo, type = 'line') {
         axisLabels: {
           x: 'Age (Years)',
           y: 'Median Employment Income ($ - Individuals / Households)'
+        },
+        tooltip: {
+          enabled: true,
+          mode: 'index',
+          intersect: false,
+          itemSort: (a, b) => {
+            const label = (it) => (it?.dataset?.label || '').toLowerCase();
+            const rank = (it) => {
+              const l = label(it);
+              if (l.includes('men p90') || (l.includes('p90') && l.includes('men'))) return 1;
+              if (l.includes('women p90') || (l.includes('p90') && l.includes('women'))) return 2;
+              if (l.includes('men (median)') || (l.includes('median') && l.includes('men'))) return 3;
+              if (l.includes('women (median)') || (l.includes('median') && l.includes('women'))) return 4;
+              if (l.includes('men p10') || (l.includes('p10') && l.includes('men'))) return 5;
+              if (l.includes('women p10') || (l.includes('p10') && l.includes('women'))) return 6;
+              return 999;
+            };
+            return rank(a) - rank(b);
+          }
         }
       }, 'line');
 
@@ -3378,10 +3596,10 @@ function createChart(canvasId, dataInfo, type = 'line') {
       // selected province will be highlighted via updateCharts().
       provinceChartInstance = createChart('provinceChart', {
         labels: baseProvinceLabels,
-        datasets: [ { label: 'Median Net Worth', data: baseProvinceValues, backgroundColor: '#66bb6a' } ],
+        datasets: [ { label: 'Median Net Worth', data: baseProvinceValues, backgroundColor: '#66bb6a', borderColor: '#66bb6a', borderWidth: 0 } ],
         step: 50000,
         axisLabels: {
-          x: 'Province (Households)',
+          x: 'Province',
           y: 'Median Net Worth ($ - Households)'
         }
       }, 'bar');
@@ -3395,7 +3613,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
         datasets: [ { label: 'Median Income', data: baseProvinceIncomeValues, backgroundColor: '#42a5f5' } ],
         step: 5000,
         axisLabels: {
-          x: 'Province (Individuals / Households)',
+          x: 'Province',
           y: 'Median Employment Income ($)'
         }
       }, 'bar');
@@ -3408,7 +3626,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
           { label: 'Financial Assets', data: new Array(ageLabels.length).fill(0), borderColor: '#29b6f6', backgroundColor: 'rgba(41,182,246,0.55)', fill: true, stack: 'assets' },
           { label: 'Pensions', data: new Array(ageLabels.length).fill(0), borderColor: '#ab47bc', backgroundColor: 'rgba(171,71,188,0.55)', fill: true, stack: 'assets' },
           { label: 'Debts', data: new Array(ageLabels.length).fill(0), borderColor: '#ffa726', backgroundColor: 'rgba(255,167,38,0.55)', fill: true, stack: 'debts' },
-          { label: 'Net Worth', data: new Array(ageLabels.length).fill(0), color: '#66bb6a', type: 'line', pointRadius: 0, order: 999 }
+          { label: 'Median Net Worth', data: new Array(ageLabels.length).fill(0), borderColor: '#ffffff', backgroundColor: 'transparent', color: '#ffffff', type: 'line', pointRadius: 0, borderWidth: 2, fill: false, order: 9999, z: 99 }
         ],
         step: 200000,
         axisLabels: {
@@ -3421,8 +3639,12 @@ function createChart(canvasId, dataInfo, type = 'line') {
       genderIncomeChartInstance = createChart('genderIncomeChart', {
         labels: ageLabels,
         datasets: [
-          { label: 'Women (Median)', data: new Array(ageLabels.length).fill(0), color: '#ab47bc' },
-          { label: 'Men (Median)', data: new Array(ageLabels.length).fill(0), color: '#1e88e5' }
+          { label: 'Women p10', data: new Array(ageLabels.length).fill(0), borderColor: 'rgba(0,0,0,0)', backgroundColor: 'rgba(171,71,188,0)', borderWidth: 0, fill: false, pointRadius: 0, pointHoverRadius: 0, tension: 0.3, order: 0, tooltip: { enabled: false }, inlineLabel: false, noGradient: true },
+          { label: 'Women p90', data: new Array(ageLabels.length).fill(0), borderColor: 'rgba(0,0,0,0)', backgroundColor: 'rgba(171,71,188,0.10)', borderWidth: 0, fill: '-1', pointRadius: 0, pointHoverRadius: 0, tension: 0.3, order: 0, tooltip: { enabled: false }, inlineLabel: false, noGradient: true },
+          { label: 'Men p10', data: new Array(ageLabels.length).fill(0), borderColor: 'rgba(0,0,0,0)', backgroundColor: 'rgba(41,182,246,0)', borderWidth: 0, fill: false, pointRadius: 0, pointHoverRadius: 0, tension: 0.3, order: 0, tooltip: { enabled: false }, inlineLabel: false, noGradient: true },
+          { label: 'Men p90', data: new Array(ageLabels.length).fill(0), borderColor: 'rgba(0,0,0,0)', backgroundColor: 'rgba(41,182,246,0.10)', borderWidth: 0, fill: '-1', pointRadius: 0, pointHoverRadius: 0, tension: 0.3, order: 0, tooltip: { enabled: false }, inlineLabel: false, noGradient: true },
+          { label: 'Women (Median)', data: new Array(ageLabels.length).fill(0), color: '#ab47bc', backgroundColor: 'transparent', fill: false, order: 10 },
+          { label: 'Men (Median)', data: new Array(ageLabels.length).fill(0), color: '#1e88e5', backgroundColor: 'transparent', fill: false, order: 10 }
         ],
         step: 5000,
         axisLabels: {
@@ -3437,7 +3659,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
         datasets: [ { label: 'Net Worth Distribution', data: [], backgroundColor: '#66bb6a' } ],
         step: null,
         axisLabels: {
-          x: 'Net Worth ($ - Households / Individuals)',
+          x: 'Net Worth ($)',
           y: 'Share of Households (%)'
         }
       }, 'bar');
@@ -3448,7 +3670,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
         datasets: [ { label: 'Income Distribution', data: [], backgroundColor: '#29bbf6' } ],
         step: null,
         axisLabels: {
-          x: 'Employment Income ($ - Individuals / Households)',
+          x: 'Employment Income ($)',
           y: 'Share of Tax Filers (%)'
         }
       }, 'bar');
@@ -3565,7 +3787,11 @@ function createChart(canvasId, dataInfo, type = 'line') {
      * notifies the user.
      */
     function plotUserData() {
-      const ageInput = parseInt(document.getElementById('userAge').value, 10);
+      const warnEl = document.getElementById('inputWarning');
+      const setWarn = (msg='') => { if (warnEl) warnEl.textContent = msg; };
+      setWarn('');
+      const ageInputRaw = document.getElementById('userAge').value;
+      const ageInput = parseInt(ageInputRaw, 10);
       const incomeInput = parseFloat(document.getElementById('userIncome').value);
       const netWorthInput = parseFloat(document.getElementById('userNetWorth').value);
       if (!ageInput || ageInput < 18 || ageInput > 100 || isNaN(incomeInput) || isNaN(netWorthInput)) {
@@ -3580,8 +3806,14 @@ function createChart(canvasId, dataInfo, type = 'line') {
         alert('Please enter a net worth of $100,000,000 or less.');
         return;
       }
+      let warnings = [];
+      const clampedAge = Math.min(ageInput, 80);
+      if (ageInput > 80) { warnings.push('Age capped to 80 (data coverage limit).'); if (document.getElementById('userAge')) document.getElementById('userAge').value = clampedAge; }
+      if (netWorthInput < 0) warnings.push('Net worth entered as debt; percentile floors applied.');
+      setWarn(warnings.join(' '));
+
       userActive = true;
-      userAgeVal = ageInput;
+      userAgeVal = clampedAge;
       userIncomeVal = incomeInput;
       userNetWorthVal = netWorthInput;
       // After storing the user values, rescale all charts to include the new marker and redraw
@@ -3619,19 +3851,28 @@ function createChart(canvasId, dataInfo, type = 'line') {
         const nationalMedianIncomeIndividual = baseIncome[22];
         const nationalMedianNetWorth = (unit === 'households') ? nationalMedianNetWorthHousehold : Math.round(nationalMedianNetWorthHousehold / equivalenceScale);
         const nationalMedianIncome = (unit === 'households') ? Math.round(nationalMedianIncomeIndividual * equivalenceScale) : nationalMedianIncomeIndividual;
-        const regionMedianNetWorth = (region === 'Canada' || provinceIndex === -1)
-          ? nationalMedianNetWorth
-          : (unit==='households' ? baseProvinceValues[provinceIndex] : Math.round(baseProvinceValues[provinceIndex] / equivalenceScale));
-        const regionMedianIncome = Math.round((incomeRatios[region] || 1) * nationalMedianIncome);
-        // Estimate parameters and compute user's percentile via normal CDF
-        const z = 1.2815515655446004;
-        const sNet = ((regionMedianNetWorth - regionMedianNetWorth*0.10)/z + (regionMedianNetWorth*1.80 - regionMedianNetWorth)/z)/2;
-        const sInc = ((regionMedianIncome - regionMedianIncome*0.22)/z + (regionMedianIncome*2.44 - regionMedianIncome)/z)/2;
-        function erf(x){ const sign=x<0?-1:1; x=Math.abs(x); const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911; const t=1/(1+p*x); const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x); return sign*y; }
-        function normCdf(z){ return 0.5*(1+erf(z/Math.SQRT2)); }
-        // For histogram view, show a vertical line at user's value with percentile labels
-        const netPct = Math.max(0, Math.min(100, 100*normCdf((userNetWorthVal - regionMedianNetWorth)/Math.max(1,sNet))));
-        const incPct = Math.max(0, Math.min(100, 100*normCdf((userIncomeVal - regionMedianIncome)/Math.max(1,sInc))));
+        // Percentiles using the same thresholds as tiles for consistency
+        const ageIdx = Math.max(0, Math.min(userAgeVal - 18, ageLabels.length - 1));
+        const incPcts = getScaledIncomePercentiles(ageIdx, region, unit);
+        const netPcts = getScaledNetWorthPercentiles(ageIdx, region, unit);
+        const incThresh = [
+          {p:10, v: incPcts.p10},
+          {p:25, v: incPcts.p25},
+          {p:50, v: incPcts.p50},
+          {p:75, v: incPcts.p75},
+          {p:90, v: incPcts.p90},
+          {p:99, v: baseTotalIncomeP99[ageIdx] * (incomeRatios[region] || 1) * (unit==='households'? EQUIVALENCE_SCALE:1)}
+        ];
+        const netThresh = [
+          {p:10, v: netPcts.p10},
+          {p:25, v: netPcts.p25},
+          {p:50, v: netPcts.p50},
+          {p:75, v: netPcts.p75},
+          {p:90, v: netPcts.p90},
+          {p:99, v: (unit==='households' ? baseNetWorthP99[ageIdx] : baseIndNetWorthP99[ageIdx]) * (netWorthRatios[region] || 1)}
+        ];
+        const incPct = clampPercentile(computePercentileFromThresholds(userIncomeVal, incThresh));
+        const netPct = clampPercentile(computePercentileFromThresholds(userNetWorthVal, netThresh));
         const toOrdinal = (n)=>{n=Math.round(n); const s=['th','st','nd','rd']; const v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]);};
         percentileNetWorthChartInstance.options.plugins.userVLine = { xValue: userNetWorthVal, color: 'rgba(244,67,54,1)', dash: [6,3], width: 2, label: `You: ${toOrdinal(netPct)} percentile` };
         percentileIncomeChartInstance.options.plugins.userVLine = { xValue: userIncomeVal, color: 'rgba(244,67,54,1)', dash: [6,3], width: 2, label: `You: ${toOrdinal(incPct)} percentile` };
@@ -3724,10 +3965,9 @@ function createChart(canvasId, dataInfo, type = 'line') {
         borderWidth: 3,
         fill: false,
         pointRadius: 0,
-        // Ensure the user line is drawn in front of bars and percentile lines
-        // Draw the user line on top of all other datasets.  A high order value
-        // ensures it appears in front of the bar series and percentile lines.
-        order: 9999,
+        // Ensure the user/reference line is drawn in front of bars and percentile lines
+        order: 100,
+        z: 10,
         // Avoid being clipped beneath chart area edges
         clip: false
       };
@@ -3744,6 +3984,25 @@ function createChart(canvasId, dataInfo, type = 'line') {
      */
     function resetUserData() {
       userActive = false;
+      userAgeVal = null;
+      userIncomeVal = null;
+      userNetWorthVal = null;
+      // Reset input fields
+      const ageEl = document.getElementById('userAge');
+      const incEl = document.getElementById('userIncome');
+      const nwEl = document.getElementById('userNetWorth');
+      if (ageEl) ageEl.value = '';
+      if (incEl) incEl.value = '';
+      if (nwEl) nwEl.value = '';
+      // Reset dropdowns to defaults
+      const provEl = document.getElementById('provinceSelect');
+      const unitEl = document.getElementById('unitSelect');
+      if (provEl) provEl.value = 'Canada';
+      if (unitEl) unitEl.value = 'households';
+      const warnEl = document.getElementById('inputWarning');
+      if (warnEl) warnEl.textContent = '';
+
+      // Remove user overlays from charts
       removeUserDataset(incomeChartInstance, 'You');
       removeUserDataset(compositionChartInstance, 'You');
       removeUserDataset(netWorthChartInstance, 'You');
@@ -3752,16 +4011,15 @@ function createChart(canvasId, dataInfo, type = 'line') {
       removeUserDataset(scatterChartInstance, 'You');
       // Clear percentile chart vertical lines
       if (percentileNetWorthChartInstance?.options?.plugins) {
-        percentileNetWorthChartInstance.options.plugins.userVLine = { index: null };
+        percentileNetWorthChartInstance.options.plugins.userVLine = { index: null, xValue: null };
         percentileNetWorthChartInstance.update();
       }
       if (percentileIncomeChartInstance?.options?.plugins) {
-        percentileIncomeChartInstance.options.plugins.userVLine = { index: null };
+        percentileIncomeChartInstance.options.plugins.userVLine = { index: null, xValue: null };
         percentileIncomeChartInstance.update();
       }
       // Rescale charts back to default ranges after removing user data
-      const region = document.getElementById('provinceSelect').value;
-      updateCharts(region);
+      updateCharts('Canada');
       // Hide insight tiles and projection section if present
       try{ showYouVsEveryone(); }catch(e){}
       try{
@@ -3770,6 +4028,9 @@ function createChart(canvasId, dataInfo, type = 'line') {
         const projCard = document.getElementById('projCard'); if (projCard) projCard.querySelector('.value').textContent = '-';
         const median65Card = document.getElementById('median65Card'); if (median65Card) median65Card.querySelector('.value').textContent = '-';
         const requiredRateCard = document.getElementById('requiredRateCard'); if (requiredRateCard) { requiredRateCard.querySelector('.value').textContent = '-'; requiredRateCard.querySelector('.label').textContent = 'Required savings rate'; }
+        ['incomePercentileValue','netWorthPercentileValue','avgIncomeValue','medianIncomeValue','avgNetWorthValue','medianNetWorthValue'].forEach(id=>{
+          const el = document.getElementById(id); if (el) el.textContent = '—';
+        });
       }catch(e){}
     }
 
@@ -3811,6 +4072,12 @@ function createChart(canvasId, dataInfo, type = 'line') {
       const prev = thresholds[thresholds.length-2] || last;
       const extra = (value - last.v) / Math.max(1, (last.v - prev.v));
       return Math.min(99, last.p + extra * (99 - last.p));
+    }
+
+    function clampPercentile(p) {
+      const num = Number(p);
+      if (!Number.isFinite(num)) return 0.5;
+      return Math.max(0.5, Math.min(99, num));
     }
 
     /* Convert percentile anchors into an approximate mean using a log-normal fit. */
@@ -3940,8 +4207,8 @@ function createChart(canvasId, dataInfo, type = 'line') {
         {p:90, v: netPcts.p90},
         {p:99, v: (unit==='households' ? baseNetWorthP99[idx] : baseIndNetWorthP99[idx]) * (netWorthRatios[region] || 1)}
       ];
-      const incomePct = computePercentileFromThresholds(userIncomeVal, incThresh);
-      const netPct = computePercentileFromThresholds(userNetWorthVal, netThresh);
+      const incomePct = clampPercentile(computePercentileFromThresholds(userIncomeVal, incThresh));
+      const netPct = clampPercentile(computePercentileFromThresholds(userNetWorthVal, netThresh));
       const unitLabel = (unit==='households') ? `${region} households` : `${region} individuals`;
       const subtitle = `for ${region} - age ${age}`;
       tilesWrap.style.display = 'flex';
@@ -3953,24 +4220,6 @@ function createChart(canvasId, dataInfo, type = 'line') {
       setTile('medianNetWorthTile', netPcts ? formatCurrency(netPcts.p50) : '-', subtitle);
       // Savings rate and DTI tiles removed
     }
-    /* Inject small download buttons under each chart and wire to Chart.toBase64Image() */
-function addDownloadFooters() {
-      const canvases = document.querySelectorAll('.chart-card canvas');
-      canvases.forEach(canvas => {
-        const card = canvas.closest('.chart-card');
-        if (!card) return;
-        if (card.querySelector('.download-btn')) return;
-        const btn = document.createElement('button');
-        btn.className = 'download-btn';
-        btn.type = 'button';
-        btn.title = 'Download chart as PNG';
-        btn.innerHTML = '<span style="font-size:0.85rem;">⬇</span><span>PNG</span>';
-        btn.addEventListener('click', function() { downloadChart(canvas.id); });
-        const chartContainer = card.querySelector('.chart-container');
-        if (chartContainer) chartContainer.insertAdjacentElement('afterend', btn);
-      });
-    }
-
     // Override with compact footer layout (PNG + Sources inline)
     function addDownloadFooters() {
       const canvases = document.querySelectorAll('.chart-card canvas');
@@ -3988,18 +4237,18 @@ function addDownloadFooters() {
             card.appendChild(footer);
           }
         }
-        const sourceBox = card.querySelector('.source-box');
-        if (sourceBox && sourceBox.parentElement !== footer) {
-          footer.appendChild(sourceBox);
+        // Remove PNG download controls (user requested).
+        footer.querySelectorAll('.download-btn, .chart-footer-actions').forEach(el => el.remove());
+
+        let sourcesRow = footer.querySelector('.chart-footer-sources');
+        if (!sourcesRow) {
+          sourcesRow = document.createElement('div');
+          sourcesRow.className = 'chart-footer-sources';
+          footer.appendChild(sourcesRow);
         }
-        if (!card.querySelector('.download-btn')) {
-          const btn = document.createElement('button');
-          btn.className = 'download-btn';
-          btn.type = 'button';
-          btn.title = 'Download chart as PNG';
-          btn.innerHTML = '<span style="font-size:0.85rem;">?</span><span>PNG</span>';
-          btn.addEventListener('click', function() { downloadChart(canvas.id); });
-          footer.insertAdjacentElement('afterbegin', btn);
+        const sourceBox = card.querySelector('.source-box');
+        if (sourceBox && sourceBox.parentElement !== sourcesRow) {
+          sourcesRow.appendChild(sourceBox);
         }
       });
     }

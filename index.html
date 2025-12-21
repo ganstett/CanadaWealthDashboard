@@ -1575,16 +1575,16 @@
           if (Number.isFinite(globalMin) && globalMin < 0) {
             suggestedMin = Math.floor(globalMin / 5000) * 5000;
           }
-          const axis = computeAxis(vals, 200000);
+          const axis = computeAxis(vals, 100000);
           const yMin = suggestedMin > 0 ? 0 : suggestedMin;
           const yMax = Math.ceil(axis.max / 50000) * 50000;
           netWorthChartInstance.options.scales.y.min = yMin;
           netWorthChartInstance.options.scales.y.max = yMax;
           if (netWorthChartInstance.options.scales.y.ticks) {
-            netWorthChartInstance.options.scales.y.ticks.stepSize = 200000;
-            netWorthChartInstance.options.scales.y.ticks.maxTicksLimit = 12;
+            netWorthChartInstance.options.scales.y.ticks.stepSize = 100000;
+            netWorthChartInstance.options.scales.y.ticks.maxTicksLimit = 14;
           } else {
-            netWorthChartInstance.options.scales.y.ticks = { stepSize: 200000, maxTicksLimit: 12 };
+            netWorthChartInstance.options.scales.y.ticks = { stepSize: 100000, maxTicksLimit: 14 };
           }
           netWorthChartInstance.options.scales.y.title.text = unit === 'households'
             ? 'Median Net Worth ($ - Households)'
@@ -2077,11 +2077,11 @@
     // increases.  Median uses the base colour for each chart.
     const percentileColors = {
       income: {
-        p10: getCss('--p10'),
-        p25: getCss('--p25'),
-        p50: getCss('--p50'),
-        p75: getCss('--p75'),
-        p90: getCss('--p90')
+        p10: '#A4C8FF',
+        p25: '#7FB5FC',
+        p50: '#5B9BF9',
+        p75: '#3B82F6',
+        p90: '#2F5CC8'
       },
 
       totalIncome: {
@@ -2093,19 +2093,19 @@
       },
 
       netWorth: {
-        p10: getCss('--p10'),
-        p25: getCss('--p25'),
-        p50: getCss('--p50'),
-        p75: getCss('--p75'),
-        p90: getCss('--p90')
+        p10: '#A7F3CE',
+        p25: '#6EE7A2',
+        p50: '#45D46F',
+        p75: '#22C55E',
+        p90: '#1F7A3E'
       },
 
       indNetWorth: {
-        p10: getCss('--p10'),
-        p25: getCss('--p25'),
-        p50: getCss('--p50'),
-        p75: getCss('--p75'),
-        p90: getCss('--p90')
+        p10: '#A7F3CE',
+        p25: '#6EE7A2',
+        p50: '#45D46F',
+        p75: '#22C55E',
+        p90: '#1F7A3E'
       },
 
       top1: {
@@ -2932,7 +2932,7 @@
       if (userActive) netVals.push(userNetWorthVal);
       // include zero line values (it's 0 across ages) in axis to guarantee zero appears but computeAxis will handle automatically
       netVals = netVals.concat(new Array(ageLabels.length).fill(0));
-      let netAxis = computeAxis(netVals, 200000);
+      let netAxis = computeAxis(netVals, 100000);
       netWorthChartInstance.options.scales.y.min = netAxis.min;
       netWorthChartInstance.options.scales.y.max = netAxis.max;
       netWorthChartInstance.update();

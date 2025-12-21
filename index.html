@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Canadian Wealth &amp; Income Dashboard</title>
+  <title>Canada's Wealth Dashboard</title>
   <!-- Open Graph tags make the site attractive when shared on social media -->
-  <meta property="og:title" content="Canadian Wealth &amp; Income Dashboard" />
+  <meta property="og:title" content="Canada's Wealth Dashboard" />
   <meta property="og:description" content="Explore detailed charts of Canadian median income, net worth by age, wealth distribution and more. Built using multiple data sources for the most comprehensive view available." />
   <meta property="og:image" content="https://example.com/share-image.png" />
   <meta property="og:type" content="website" />
@@ -170,6 +170,27 @@
     .chartjs-tooltip .tt-row.highlight { background: linear-gradient(90deg, rgba(41,182,246,0.06), rgba(0,0,0,0)); padding:6px 8px; border-radius:6px; }
     .chartjs-tooltip .tt-row .tt-label { color: var(--muted); font-size:0.85rem; }
     .chartjs-tooltip .tt-row.highlight .tt-label { color: var(--accent); font-weight:700; }
+
+    @media (max-width: 768px) {
+      .chartjs-tooltip {
+        max-width: 240px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        font-size: 10px;
+        line-height: 1.35;
+      }
+      .chartjs-tooltip .tt-title { font-size: 11px; }
+      .chartjs-tooltip .tt-row .tt-label { font-size: 10px; }
+      .info-icon .info-tooltip {
+        max-width: 220px;
+        font-size: 11px;
+        line-height: 1.35;
+      }
+      .info-icon .info-tooltip strong {
+        font-size: 12px;
+        line-height: 1.35;
+      }
+    }
 
     /* Snapshot button */
     .snapshot-btn { display:inline-block; margin:12px 0 0 0; padding:6px 12px; font-size:0.85rem; border-radius:999px; border:1px solid rgba(255,255,255,0.06); background: rgba(7,18,39,0.6); color:#dbefff; cursor:pointer; }
@@ -2419,21 +2440,22 @@
     // Apply mobile-friendly defaults before charts are created
     (function applyChartDefaultsForDevice(){
       const mobile = isMobileChart();
+      const tooltipMobile = window.innerWidth <= 768;
 
       // Tooltip sizing
       Chart.defaults.plugins.tooltip.enabled = true;
-      Chart.defaults.plugins.tooltip.padding = mobile ? 8 : 12;
-      Chart.defaults.plugins.tooltip.boxPadding = mobile ? 4 : 6;
-      Chart.defaults.plugins.tooltip.caretSize = mobile ? 6 : 8;
-      Chart.defaults.plugins.tooltip.cornerRadius = mobile ? 10 : 12;
+      Chart.defaults.plugins.tooltip.padding = tooltipMobile ? 6 : 10;
+      Chart.defaults.plugins.tooltip.boxPadding = tooltipMobile ? 4 : 6;
+      Chart.defaults.plugins.tooltip.caretSize = tooltipMobile ? 6 : 8;
+      Chart.defaults.plugins.tooltip.cornerRadius = tooltipMobile ? 6 : 8;
       Chart.defaults.plugins.tooltip.titleFont = {
         family: Chart.defaults.font.family,
-        size: mobile ? 12 : 14,
+        size: tooltipMobile ? 11 : 14,
         weight: '600'
       };
       Chart.defaults.plugins.tooltip.bodyFont = {
         family: Chart.defaults.font.family,
-        size: mobile ? 12 : 13,
+        size: tooltipMobile ? 10 : 13,
         weight: '500'
       };
 
@@ -3380,18 +3402,19 @@ function createChart(canvasId, dataInfo, type = 'line') {
 
   // Build datasets w/ safe colors + optional gradient fill
     const datasets = dataInfo.datasets.map((ds) => {
+    const effectiveType = ds.type || type;
     const stroke = ds.borderColor || ds.color || '#29b6f6';
     const baseBorderWidth = ds.borderWidth ?? 2;
     const borderWidth = isMobile ? Math.min(baseBorderWidth, 2) : baseBorderWidth;
     let fillColor = ds.backgroundColor || (ds.fill ? toRGBA(stroke, ds.fillOpacity ?? 0.35) : 'transparent');
 
-    // For stacked/filled areas, create a subtle vertical gradient (fade) unless explicitly disabled
-    if ((ds.fill || ds.stack) && type !== 'bar' && type !== 'scatter' && !ds.noGradient) {
+    // For line datasets only, create a subtle vertical gradient (fade) unless explicitly disabled
+    if (effectiveType === 'line' && (ds.fill || ds.stack) && type !== 'scatter' && !ds.noGradient) {
       const grad = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
       grad.addColorStop(0, toRGBA(stroke, 0.45));
       grad.addColorStop(1, toRGBA(stroke, 0.05));
       fillColor = grad;
-    } else if (ds.fill || ds.stack) {
+    } else if (effectiveType === 'line' && (ds.fill || ds.stack)) {
       fillColor = ds.backgroundColor || toRGBA(stroke, ds.fillOpacity ?? 0.35);
     }
 
@@ -3428,12 +3451,26 @@ function createChart(canvasId, dataInfo, type = 'line') {
 
   // X ticks
   const labels = dataInfo.labels || [];
+  const isAgeLabelSet = Array.isArray(labels) && labels.length === ageLabels.length && labels.every((v, i) => String(v) === ageLabels[i]);
+  const ageTickStep = 5;
   const xTickOptions = {
     color: '#b0c5e8',
     font: { size: tickFontSize },
-    callback: function(value, index) { return labels[index]; }
+    callback: function(value, index) {
+      const label = labels[index];
+      if (isAgeLabelSet) {
+        return (typeof this.getLabelForValue === 'function') ? this.getLabelForValue(value) : label;
+      }
+      return label;
+    }
   };
-  if (type === 'bar') {
+  if (isAgeLabelSet) {
+    xTickOptions.autoSkip = false;
+    xTickOptions.maxRotation = 0;
+    xTickOptions.minRotation = 0;
+    delete xTickOptions.maxTicksLimit;
+  }
+  if (type === 'bar' && !isAgeLabelSet) {
     xTickOptions.autoSkip = isMobile ? true : false;
     xTickOptions.maxRotation = isMobile ? 30 : 45;
     xTickOptions.minRotation = isMobile ? 0 : 45;
@@ -3470,7 +3507,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
         maxTicksLimit: dataInfo.step ? Math.ceil((yMax - yMin)/dataInfo.step) + 1 : undefined,
         autoSkip: isMobile ? true : undefined
       },
-      grid: { color: '#1f3a64' }
+        grid: { color: '#1f3a64' }
       }
     },
     plugins: {
@@ -3518,6 +3555,22 @@ function createChart(canvasId, dataInfo, type = 'line') {
     }
   } catch (e) {
     // noop; defensive in case Chart isn't available at runtime
+  }
+
+  // Deterministic ticks for age-based category charts: show 18 and every 5 years
+  if (isAgeLabelSet) {
+    options.scales = options.scales || {};
+    options.scales.x = options.scales.x || {};
+    options.scales.x.afterBuildTicks = (scale) => {
+      const lbls = scale.getLabels();
+      const ticks = [];
+      for (let i = 0; i < lbls.length; i++) {
+        const age = Number(lbls[i]);
+        if (!Number.isFinite(age)) continue;
+        if (age === 18 || age % 5 === 0) ticks.push({ value: i });
+      }
+      scale.ticks = ticks;
+    };
   }
 
   // Proper axes for scatter from the start (prevents the blank-chart error)
@@ -3632,38 +3685,46 @@ function createChart(canvasId, dataInfo, type = 'line') {
     {
       label: 'Employment Income',
       data: baseTotalIncome.map(() => 0),
+      type: 'bar',
       borderColor: '#42a5f5',
-      backgroundColor: 'rgba(66,165,245,0.30)',
-      fill: true,
-      noGradient: true,
-      stack: 'income'
+      backgroundColor: '#42a5f5',
+      stack: 'income',
+      barPercentage: 0.9,
+      categoryPercentage: 0.85,
+      borderWidth: 0
     },
     {
       label: 'Investment Income',
       data: baseTotalIncome.map(() => 0),
+      type: 'bar',
       borderColor: '#66bb6a',
-      backgroundColor: 'rgba(102,187,106,0.30)',
-      fill: true,
-      noGradient: true,
-      stack: 'income'
+      backgroundColor: '#66bb6a',
+      stack: 'income',
+      barPercentage: 0.9,
+      categoryPercentage: 0.85,
+      borderWidth: 0
     },
     {
       label: 'Pension Income',
       data: baseTotalIncome.map(() => 0),
+      type: 'bar',
       borderColor: '#ffa726',
-      backgroundColor: 'rgba(255,167,38,0.30)',
-      fill: true,
-      noGradient: true,
-      stack: 'income'
+      backgroundColor: '#ffa726',
+      stack: 'income',
+      barPercentage: 0.9,
+      categoryPercentage: 0.85,
+      borderWidth: 0
     },
     {
       label: 'Government Transfers',
       data: baseTotalIncome.map(() => 0),
+      type: 'bar',
       borderColor: '#ab47bc',
-      backgroundColor: 'rgba(171,71,188,0.30)',
-      fill: true,
-      noGradient: true,
-      stack: 'income'
+      backgroundColor: '#ab47bc',
+      stack: 'income',
+      barPercentage: 0.9,
+      categoryPercentage: 0.85,
+      borderWidth: 0
     }
   ],
   step: 5000,
@@ -3671,7 +3732,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
     x: 'Age (Years)',
     y: 'Income Components ($ - Individuals / Households)'
   }
-}, 'line');
+}, 'bar');
 
       // Build the combined net worth chart (households vs individuals).  Both series
       // are shown by default; additional percentile lines can be toggled via the
@@ -3744,10 +3805,10 @@ function createChart(canvasId, dataInfo, type = 'line') {
       wealthCompositionChartInstance = createChart('wealthCompositionChart', {
         labels: ageLabels,
         datasets: [
-          { label: 'Real Estate', data: new Array(ageLabels.length).fill(0), borderColor: '#66bb6a', backgroundColor: 'rgba(102,187,106,0.55)', fill: true, stack: 'assets' },
-          { label: 'Financial Assets', data: new Array(ageLabels.length).fill(0), borderColor: '#29b6f6', backgroundColor: 'rgba(41,182,246,0.55)', fill: true, stack: 'assets' },
-          { label: 'Pensions', data: new Array(ageLabels.length).fill(0), borderColor: '#ab47bc', backgroundColor: 'rgba(171,71,188,0.55)', fill: true, stack: 'assets' },
-          { label: 'Debts', data: new Array(ageLabels.length).fill(0), borderColor: '#ffa726', backgroundColor: 'rgba(255,167,38,0.55)', fill: true, stack: 'debts' },
+          { label: 'Real Estate', type: 'bar', data: new Array(ageLabels.length).fill(0), borderColor: '#66bb6a', backgroundColor: '#66bb6a', stack: 'assets', barPercentage: 0.9, categoryPercentage: 0.85, borderWidth: 0 },
+          { label: 'Financial Assets', type: 'bar', data: new Array(ageLabels.length).fill(0), borderColor: '#29b6f6', backgroundColor: '#29b6f6', stack: 'assets', barPercentage: 0.9, categoryPercentage: 0.85, borderWidth: 0 },
+          { label: 'Pensions', type: 'bar', data: new Array(ageLabels.length).fill(0), borderColor: '#ab47bc', backgroundColor: '#ab47bc', stack: 'assets', barPercentage: 0.9, categoryPercentage: 0.85, borderWidth: 0 },
+          { label: 'Debts', type: 'bar', data: new Array(ageLabels.length).fill(0), borderColor: '#ffa726', backgroundColor: '#ffa726', stack: 'debts', barPercentage: 0.9, categoryPercentage: 0.85, borderWidth: 0 },
           { label: 'Median Net Worth', data: new Array(ageLabels.length).fill(0), borderColor: '#ffffff', backgroundColor: 'transparent', color: '#ffffff', type: 'line', pointRadius: 0, borderWidth: 2, fill: false, order: 9999, z: 99 }
         ],
         step: 200000,
@@ -3755,7 +3816,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
           x: 'Age (Years)',
           y: 'Assets & Liabilities ($ - Households / Individuals)'
         }
-      }, 'line');
+      }, 'bar');
 
       // Income Percentile by Gender - line chart similar to individual income by age (placeholder ratios)
       genderIncomeChartInstance = createChart('genderIncomeChart', {

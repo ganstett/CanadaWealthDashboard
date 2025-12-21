@@ -171,27 +171,6 @@
     .chartjs-tooltip .tt-row .tt-label { color: var(--muted); font-size:0.85rem; }
     .chartjs-tooltip .tt-row.highlight .tt-label { color: var(--accent); font-weight:700; }
 
-    @media (max-width: 768px) {
-      .chartjs-tooltip {
-        max-width: 240px;
-        padding: 6px 8px;
-        border-radius: 6px;
-        font-size: 10px;
-        line-height: 1.35;
-      }
-      .chartjs-tooltip .tt-title { font-size: 11px; }
-      .chartjs-tooltip .tt-row .tt-label { font-size: 10px; }
-      .info-icon .info-tooltip {
-        max-width: 220px;
-        font-size: 11px;
-        line-height: 1.35;
-      }
-      .info-icon .info-tooltip strong {
-        font-size: 12px;
-        line-height: 1.35;
-      }
-    }
-
     /* Snapshot button */
     .snapshot-btn { display:inline-block; margin:12px 0 0 0; padding:6px 12px; font-size:0.85rem; border-radius:999px; border:1px solid rgba(255,255,255,0.06); background: rgba(7,18,39,0.6); color:#dbefff; cursor:pointer; }
     .snapshot-btn:hover { box-shadow: 0 6px 18px rgba(0,191,165,0.08); }
@@ -1590,9 +1569,23 @@
           });
           // Include zero line to ensure axis includes zero
           if (userActive && userNetWorth) vals.push(userNetWorth);
+          const p10Series = (scaledData.percentiles && scaledData.percentiles.p10) ? scaledData.percentiles.p10 : [];
+          const globalMin = p10Series.length ? Math.min(...p10Series) : Math.min(...vals);
+          let suggestedMin = 0;
+          if (Number.isFinite(globalMin) && globalMin < 0) {
+            suggestedMin = Math.floor(globalMin / 5000) * 5000;
+          }
           const axis = computeAxis(vals, 200000);
-          netWorthChartInstance.options.scales.y.min = axis.min;
-          netWorthChartInstance.options.scales.y.max = axis.max;
+          const yMin = suggestedMin > 0 ? 0 : suggestedMin;
+          const yMax = Math.ceil(axis.max / 50000) * 50000;
+          netWorthChartInstance.options.scales.y.min = yMin;
+          netWorthChartInstance.options.scales.y.max = yMax;
+          if (netWorthChartInstance.options.scales.y.ticks) {
+            netWorthChartInstance.options.scales.y.ticks.stepSize = 200000;
+            netWorthChartInstance.options.scales.y.ticks.maxTicksLimit = 12;
+          } else {
+            netWorthChartInstance.options.scales.y.ticks = { stepSize: 200000, maxTicksLimit: 12 };
+          }
           netWorthChartInstance.options.scales.y.title.text = unit === 'households'
             ? 'Median Net Worth ($ - Households)'
             : 'Median Net Worth ($ - Individuals)';
@@ -1660,6 +1653,79 @@
     const incomeGrowthFactor = 1 + INCOME_GROWTH_NOMINAL;
     baseIncome = baseIncome.map(v => Math.round(v * incomeGrowthFactor));
     baseTotalIncome = baseTotalIncome.map(v => Math.round(v * incomeGrowthFactor));
+    // Shared age tick labels for composition charts to reduce clutter
+    const AGE_TICK_LABELS = new Set(['18','20','25','30','35','40','45','50','55','60','65','70','75','80']);
+    function ageTickFormatter(value, index) {
+      const lbl = (this && typeof this.getLabelForValue === 'function')
+        ? this.getLabelForValue(value)
+        : (Array.isArray(ageLabels) ? ageLabels[index] : value);
+      return AGE_TICK_LABELS.has(String(lbl)) ? lbl : '';
+    }
+    // Net worth percentile anchors (SFS -> 2026 scaling for ages 18-34)
+    const SFS_BASE_YEAR = 2019;
+    const TARGET_YEAR = 2026;
+    const NET_WORTH_GROWTH_FACTOR_TO_2026 = 1.20; // StatsCan NBSA household net worth ratio (2026 / base year)
+
+    const sfsAnchors = [
+      { ageMin: 18, ageMax: 24, p10: -8000, p25: 5000, p50: 30000, p75: 110000, p90: 220000 },
+      { ageMin: 25, ageMax: 29, p10: 2000, p25: 30000, p50: 90000, p75: 250000, p90: 480000 },
+      { ageMin: 30, ageMax: 34, p10: 15000, p25: 60000, p50: 170000, p75: 420000, p90: 800000 },
+    ];
+
+    function scaleTo2026(v) { return Math.round(v * NET_WORTH_GROWTH_FACTOR_TO_2026); }
+    const scaledSfsAnchors = sfsAnchors.map(a => ({
+      ageMin: a.ageMin,
+      ageMax: a.ageMax,
+      p10: scaleTo2026(a.p10),
+      p25: scaleTo2026(a.p25),
+      p50: scaleTo2026(a.p50),
+      p75: scaleTo2026(a.p75),
+      p90: scaleTo2026(a.p90)
+    }));
+
+    function enforceMonotone(p, age, original) {
+      const orig = Object.assign({}, original || p);
+      if (p.p25 < p.p10) p.p25 = p.p10;
+      if (p.p50 < p.p25) p.p50 = p.p25;
+      if (p.p75 < p.p50) p.p75 = p.p50;
+      if (p.p90 < p.p75) p.p90 = p.p75;
+      const changed = ['p25','p50','p75','p90'].some(k => p[k] !== orig[k]);
+      if (changed && typeof console !== 'undefined' && console.warn) {
+        console.warn('Net worth percentile clamped for age', age, { original: orig, clamped: { ...p } });
+      }
+      return p;
+    }
+
+    function buildYoungNetWorthSeries(endAnchor34) {
+      const anchors = [
+        { age: 18, p10: scaledSfsAnchors[0].p10, p25: scaledSfsAnchors[0].p25, p50: scaledSfsAnchors[0].p50, p75: scaledSfsAnchors[0].p75, p90: scaledSfsAnchors[0].p90 },
+        { age: 25, p10: scaledSfsAnchors[1].p10, p25: scaledSfsAnchors[1].p25, p50: scaledSfsAnchors[1].p50, p75: scaledSfsAnchors[1].p75, p90: scaledSfsAnchors[1].p90 },
+        { age: 34, p10: endAnchor34.p10, p25: endAnchor34.p25, p50: endAnchor34.p50, p75: endAnchor34.p75, p90: endAnchor34.p90 }
+      ];
+      const result = {};
+      for (let age = 18; age <= 34; age++) {
+        // locate interval
+        let A = anchors[0], B = anchors[anchors.length - 1];
+        for (let i = 0; i < anchors.length - 1; i++) {
+          if (age >= anchors[i].age && age <= anchors[i + 1].age) { A = anchors[i]; B = anchors[i + 1]; break; }
+        }
+        const span = Math.max(1, B.age - A.age);
+        const t = Math.max(0, Math.min(1, (age - A.age) / span));
+        const raw = {
+          p10: Math.round(A.p10 + (B.p10 - A.p10) * t),
+          p25: Math.round(A.p25 + (B.p25 - A.p25) * t),
+          p50: Math.round(A.p50 + (B.p50 - A.p50) * t),
+          p75: Math.round(A.p75 + (B.p75 - A.p75) * t),
+          p90: Math.round(A.p90 + (B.p90 - A.p90) * t)
+        };
+        if (Object.values(raw).some(v => Number.isNaN(v))) {
+          console.warn('Net worth interpolation produced NaN', { age, raw, A, B });
+        }
+        result[age] = enforceMonotone(Object.assign({}, raw), age, raw);
+      }
+      return result;
+    }
+
     // Compute median net worth by age using compound interpolation between
     // SFS anchor medians. This replaces the prior static array and preserves
     // exact values at the anchor ages. The estimator uses the formula:
@@ -1899,6 +1965,27 @@
     baseNetWorthP75 = baseNetWorthP75.map(v => Math.round(v * netWorthGrowthFactor));
     baseNetWorthP90 = baseNetWorthP90.map(v => Math.round(v * netWorthGrowthFactor));
     baseNetWorthP99 = baseNetWorthP99.map(v => Math.round(v * netWorthGrowthFactor));
+
+    const idx34 = 34 - 18;
+    const endAnchor34 = {
+      p10: baseNetWorthP10[idx34],
+      p25: baseNetWorthP25[idx34],
+      p50: baseNetWorth[idx34],
+      p75: baseNetWorthP75[idx34],
+      p90: baseNetWorthP90[idx34]
+    };
+    const youngNetWorthSeries = buildYoungNetWorthSeries(endAnchor34);
+    Object.keys(youngNetWorthSeries).forEach(ageStr => {
+      const age = parseInt(ageStr, 10);
+      if (age < 18 || age > 34 || Number.isNaN(age)) return;
+      const idx = age - 18;
+      const pt = youngNetWorthSeries[age];
+      baseNetWorth[idx] = pt.p50;
+      baseNetWorthP10[idx] = pt.p10;
+      baseNetWorthP25[idx] = pt.p25;
+      baseNetWorthP75[idx] = pt.p75;
+      baseNetWorthP90[idx] = pt.p90;
+    });
     // Average net worth percentiles (households)
     let baseAvgHouseholdsP10 = [25000,27083,29167,31250,33333,35417,37500,39583,41667,43750,45833,47917,50000,54000,58000,62000,66000,70000,74000,78000,82000,86000,90000,95500,101000,106500,112000,117500,123000,128500,134000,139500,145000,148000,151000,154000,157000,160000,163000,166000,169000,172000,175000,168000,161000,154000,147000,140000,136000,132000,128000,124000,120000,118000,116000,114000,112000,110000,108000,106000,104000,102000,100000];
     let baseAvgHouseholdsP25 = [87500,94792,102083,109375,116667,123958,131250,138542,145833,153125,160417,167708,175000,189000,203000,217000,231000,245000,259000,273000,287000,301000,315000,334250,353500,372750,392000,411250,430500,449750,469000,488250,507500,518000,528500,539000,549500,560000,570500,581000,591500,602000,612500,588000,563500,539000,514500,490000,476000,462000,448000,434000,420000,413000,406000,399000,392000,385000,378000,371000,364000,357000,350000];
@@ -2374,7 +2461,9 @@
 
           const colorCandidate = Array.isArray(ds.borderColor) ? ds.borderColor[0] : ds.borderColor;
           const fallbackBg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[0] : ds.backgroundColor;
-          const textColor = (typeof colorCandidate === 'string' && colorCandidate) ||
+          const inlineColor = ds.inlineLabelColor;
+          const textColor = (typeof inlineColor === 'string' && inlineColor) ||
+                            (typeof colorCandidate === 'string' && colorCandidate) ||
                             (typeof fallbackBg === 'string' && fallbackBg) ||
                             '#e0e6ed';
 
@@ -2440,22 +2529,21 @@
     // Apply mobile-friendly defaults before charts are created
     (function applyChartDefaultsForDevice(){
       const mobile = isMobileChart();
-      const tooltipMobile = window.innerWidth <= 768;
 
       // Tooltip sizing
       Chart.defaults.plugins.tooltip.enabled = true;
-      Chart.defaults.plugins.tooltip.padding = tooltipMobile ? 6 : 10;
-      Chart.defaults.plugins.tooltip.boxPadding = tooltipMobile ? 4 : 6;
-      Chart.defaults.plugins.tooltip.caretSize = tooltipMobile ? 6 : 8;
-      Chart.defaults.plugins.tooltip.cornerRadius = tooltipMobile ? 6 : 8;
+      Chart.defaults.plugins.tooltip.padding = mobile ? 8 : 12;
+      Chart.defaults.plugins.tooltip.boxPadding = mobile ? 4 : 6;
+      Chart.defaults.plugins.tooltip.caretSize = mobile ? 6 : 8;
+      Chart.defaults.plugins.tooltip.cornerRadius = mobile ? 10 : 12;
       Chart.defaults.plugins.tooltip.titleFont = {
         family: Chart.defaults.font.family,
-        size: tooltipMobile ? 11 : 14,
+        size: mobile ? 12 : 14,
         weight: '600'
       };
       Chart.defaults.plugins.tooltip.bodyFont = {
         family: Chart.defaults.font.family,
-        size: tooltipMobile ? 10 : 13,
+        size: mobile ? 12 : 13,
         weight: '500'
       };
 
@@ -2801,6 +2889,12 @@
           compositionChartInstance.options.scales.y.ticks.display = true;
           compositionChartInstance.options.scales.y.ticks.maxTicksLimit = 8;
         }
+        if (compositionChartInstance.options.scales.x && compositionChartInstance.options.scales.x.ticks) {
+          compositionChartInstance.options.scales.x.ticks.callback = ageTickFormatter;
+          compositionChartInstance.options.scales.x.ticks.autoSkip = false;
+          compositionChartInstance.options.scales.x.ticks.maxRotation = 0;
+          compositionChartInstance.options.scales.x.ticks.minRotation = 0;
+        }
         compositionChartInstance.update();
       }
 
@@ -2905,6 +2999,12 @@
         if (wealthCompositionChartInstance.options.scales.y.ticks) {
           wealthCompositionChartInstance.options.scales.y.ticks.display = true;
           wealthCompositionChartInstance.options.scales.y.ticks.maxTicksLimit = 8;
+        }
+        if (wealthCompositionChartInstance.options.scales.x && wealthCompositionChartInstance.options.scales.x.ticks) {
+          wealthCompositionChartInstance.options.scales.x.ticks.callback = ageTickFormatter;
+          wealthCompositionChartInstance.options.scales.x.ticks.autoSkip = false;
+          wealthCompositionChartInstance.options.scales.x.ticks.maxRotation = 0;
+          wealthCompositionChartInstance.options.scales.x.ticks.minRotation = 0;
         }
         wealthCompositionChartInstance.update();
       })();
@@ -3402,19 +3502,18 @@ function createChart(canvasId, dataInfo, type = 'line') {
 
   // Build datasets w/ safe colors + optional gradient fill
     const datasets = dataInfo.datasets.map((ds) => {
-    const effectiveType = ds.type || type;
     const stroke = ds.borderColor || ds.color || '#29b6f6';
     const baseBorderWidth = ds.borderWidth ?? 2;
     const borderWidth = isMobile ? Math.min(baseBorderWidth, 2) : baseBorderWidth;
     let fillColor = ds.backgroundColor || (ds.fill ? toRGBA(stroke, ds.fillOpacity ?? 0.35) : 'transparent');
 
-    // For line datasets only, create a subtle vertical gradient (fade) unless explicitly disabled
-    if (effectiveType === 'line' && (ds.fill || ds.stack) && type !== 'scatter' && !ds.noGradient) {
+    // For stacked/filled areas, create a subtle vertical gradient (fade) unless explicitly disabled
+    if ((ds.fill || ds.stack) && type !== 'bar' && type !== 'scatter' && !ds.noGradient) {
       const grad = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
       grad.addColorStop(0, toRGBA(stroke, 0.45));
       grad.addColorStop(1, toRGBA(stroke, 0.05));
       fillColor = grad;
-    } else if (effectiveType === 'line' && (ds.fill || ds.stack)) {
+    } else if (ds.fill || ds.stack) {
       fillColor = ds.backgroundColor || toRGBA(stroke, ds.fillOpacity ?? 0.35);
     }
 
@@ -3451,26 +3550,12 @@ function createChart(canvasId, dataInfo, type = 'line') {
 
   // X ticks
   const labels = dataInfo.labels || [];
-  const isAgeLabelSet = Array.isArray(labels) && labels.length === ageLabels.length && labels.every((v, i) => String(v) === ageLabels[i]);
-  const ageTickStep = 5;
   const xTickOptions = {
     color: '#b0c5e8',
     font: { size: tickFontSize },
-    callback: function(value, index) {
-      const label = labels[index];
-      if (isAgeLabelSet) {
-        return (typeof this.getLabelForValue === 'function') ? this.getLabelForValue(value) : label;
-      }
-      return label;
-    }
+    callback: function(value, index) { return labels[index]; }
   };
-  if (isAgeLabelSet) {
-    xTickOptions.autoSkip = false;
-    xTickOptions.maxRotation = 0;
-    xTickOptions.minRotation = 0;
-    delete xTickOptions.maxTicksLimit;
-  }
-  if (type === 'bar' && !isAgeLabelSet) {
+  if (type === 'bar') {
     xTickOptions.autoSkip = isMobile ? true : false;
     xTickOptions.maxRotation = isMobile ? 30 : 45;
     xTickOptions.minRotation = isMobile ? 0 : 45;
@@ -3507,7 +3592,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
         maxTicksLimit: dataInfo.step ? Math.ceil((yMax - yMin)/dataInfo.step) + 1 : undefined,
         autoSkip: isMobile ? true : undefined
       },
-        grid: { color: '#1f3a64' }
+      grid: { color: '#1f3a64' }
       }
     },
     plugins: {
@@ -3555,22 +3640,6 @@ function createChart(canvasId, dataInfo, type = 'line') {
     }
   } catch (e) {
     // noop; defensive in case Chart isn't available at runtime
-  }
-
-  // Deterministic ticks for age-based category charts: show 18 and every 5 years
-  if (isAgeLabelSet) {
-    options.scales = options.scales || {};
-    options.scales.x = options.scales.x || {};
-    options.scales.x.afterBuildTicks = (scale) => {
-      const lbls = scale.getLabels();
-      const ticks = [];
-      for (let i = 0; i < lbls.length; i++) {
-        const age = Number(lbls[i]);
-        if (!Number.isFinite(age)) continue;
-        if (age === 18 || age % 5 === 0) ticks.push({ value: i });
-      }
-      scale.ticks = ticks;
-    };
   }
 
   // Proper axes for scatter from the start (prevents the blank-chart error)
@@ -3680,59 +3749,55 @@ function createChart(canvasId, dataInfo, type = 'line') {
       // are computed in updateCharts() based on the selected region and age.
 
       compositionChartInstance = createChart('compositionChart', {
-  labels: ageLabels,
-  datasets: [
-    {
-      label: 'Employment Income',
-      data: baseTotalIncome.map(() => 0),
-      type: 'bar',
-      borderColor: '#42a5f5',
-      backgroundColor: '#42a5f5',
-      stack: 'income',
-      barPercentage: 0.9,
-      categoryPercentage: 0.85,
-      borderWidth: 0
-    },
-    {
-      label: 'Investment Income',
-      data: baseTotalIncome.map(() => 0),
-      type: 'bar',
-      borderColor: '#66bb6a',
-      backgroundColor: '#66bb6a',
-      stack: 'income',
-      barPercentage: 0.9,
-      categoryPercentage: 0.85,
-      borderWidth: 0
-    },
-    {
-      label: 'Pension Income',
-      data: baseTotalIncome.map(() => 0),
-      type: 'bar',
-      borderColor: '#ffa726',
-      backgroundColor: '#ffa726',
-      stack: 'income',
-      barPercentage: 0.9,
-      categoryPercentage: 0.85,
-      borderWidth: 0
-    },
-    {
-      label: 'Government Transfers',
-      data: baseTotalIncome.map(() => 0),
-      type: 'bar',
-      borderColor: '#ab47bc',
-      backgroundColor: '#ab47bc',
-      stack: 'income',
-      barPercentage: 0.9,
-      categoryPercentage: 0.85,
-      borderWidth: 0
-    }
-  ],
-  step: 5000,
-  axisLabels: {
-    x: 'Age (Years)',
-    y: 'Income Components ($ - Individuals / Households)'
-  }
-}, 'bar');
+        labels: ageLabels,
+        datasets: [
+          {
+            label: 'Employment Income',
+            data: baseTotalIncome.map(() => 0),
+            borderColor: '#42a5f5',
+            backgroundColor: 'rgba(66,165,245,0.75)',
+            stack: 'income',
+            borderWidth: 0
+          },
+          {
+            label: 'Investment Income',
+            data: baseTotalIncome.map(() => 0),
+            borderColor: '#66bb6a',
+            backgroundColor: 'rgba(102,187,106,0.75)',
+            stack: 'income',
+            borderWidth: 0
+          },
+          {
+            label: 'Pension Income',
+            data: baseTotalIncome.map(() => 0),
+            borderColor: '#ffa726',
+            backgroundColor: 'rgba(255,167,38,0.75)',
+            stack: 'income',
+            borderWidth: 0
+          },
+          {
+            label: 'Government Transfers',
+            data: baseTotalIncome.map(() => 0),
+            borderColor: '#ab47bc',
+            backgroundColor: 'rgba(171,71,188,0.75)',
+            stack: 'income',
+            borderWidth: 0
+          }
+        ],
+        step: 5000,
+        axisLabels: {
+          x: 'Age (Years)',
+          y: 'Income Components ($ - Individuals / Households)'
+        }
+      }, 'bar');
+      if (compositionChartInstance?.options?.scales?.x) {
+        compositionChartInstance.options.scales.x.ticks = Object.assign({}, compositionChartInstance.options.scales.x.ticks, {
+          callback: ageTickFormatter,
+          autoSkip: false,
+          maxRotation: 0,
+          minRotation: 0
+        });
+      }
 
       // Build the combined net worth chart (households vs individuals).  Both series
       // are shown by default; additional percentile lines can be toggled via the
@@ -3805,10 +3870,10 @@ function createChart(canvasId, dataInfo, type = 'line') {
       wealthCompositionChartInstance = createChart('wealthCompositionChart', {
         labels: ageLabels,
         datasets: [
-          { label: 'Real Estate', type: 'bar', data: new Array(ageLabels.length).fill(0), borderColor: '#66bb6a', backgroundColor: '#66bb6a', stack: 'assets', barPercentage: 0.9, categoryPercentage: 0.85, borderWidth: 0 },
-          { label: 'Financial Assets', type: 'bar', data: new Array(ageLabels.length).fill(0), borderColor: '#29b6f6', backgroundColor: '#29b6f6', stack: 'assets', barPercentage: 0.9, categoryPercentage: 0.85, borderWidth: 0 },
-          { label: 'Pensions', type: 'bar', data: new Array(ageLabels.length).fill(0), borderColor: '#ab47bc', backgroundColor: '#ab47bc', stack: 'assets', barPercentage: 0.9, categoryPercentage: 0.85, borderWidth: 0 },
-          { label: 'Debts', type: 'bar', data: new Array(ageLabels.length).fill(0), borderColor: '#ffa726', backgroundColor: '#ffa726', stack: 'debts', barPercentage: 0.9, categoryPercentage: 0.85, borderWidth: 0 },
+          { label: 'Real Estate', data: new Array(ageLabels.length).fill(0), borderColor: '#66bb6a', backgroundColor: 'rgba(102,187,106,0.55)', fill: true, stack: 'assets' },
+          { label: 'Financial Assets', data: new Array(ageLabels.length).fill(0), borderColor: '#29b6f6', backgroundColor: 'rgba(41,182,246,0.55)', fill: true, stack: 'assets' },
+          { label: 'Pensions', data: new Array(ageLabels.length).fill(0), borderColor: '#ab47bc', backgroundColor: 'rgba(171,71,188,0.55)', fill: true, stack: 'assets' },
+          { label: 'Debts', data: new Array(ageLabels.length).fill(0), borderColor: '#ffa726', backgroundColor: 'rgba(255,167,38,0.55)', fill: true, stack: 'debts' },
           { label: 'Median Net Worth', data: new Array(ageLabels.length).fill(0), borderColor: '#ffffff', backgroundColor: 'transparent', color: '#ffffff', type: 'line', pointRadius: 0, borderWidth: 2, fill: false, order: 9999, z: 99 }
         ],
         step: 200000,
@@ -3817,6 +3882,14 @@ function createChart(canvasId, dataInfo, type = 'line') {
           y: 'Assets & Liabilities ($ - Households / Individuals)'
         }
       }, 'bar');
+      if (wealthCompositionChartInstance?.options?.scales?.x) {
+        wealthCompositionChartInstance.options.scales.x.ticks = Object.assign({}, wealthCompositionChartInstance.options.scales.x.ticks, {
+          callback: ageTickFormatter,
+          autoSkip: false,
+          maxRotation: 0,
+          minRotation: 0
+        });
+      }
 
       // Income Percentile by Gender - line chart similar to individual income by age (placeholder ratios)
       genderIncomeChartInstance = createChart('genderIncomeChart', {
@@ -4017,6 +4090,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
       // Place a marker on the income composition chart representing the user's total income
       addUserMarkerToChart(compositionChartInstance, userIncomeVal, index, 'You');
       addUserMarkerToChart(netWorthChartInstance, userNetWorthVal, index, 'You');
+      addUserMarkerToChart(wealthCompositionChartInstance, userNetWorthVal, index, 'You');
       addUserLineToBarChart(provinceChartInstance, userNetWorthVal, 'You');
       // Add a horizontal line on the provincial income chart for the user's income
       addUserLineToBarChart(provinceIncomeChartInstance, userIncomeVal, 'You');
@@ -4082,19 +4156,25 @@ function createChart(canvasId, dataInfo, type = 'line') {
       const markerDataset = {
         label: label,
         data: dataArray,
-        borderColor: 'rgba(244,67,54,1)',
-        backgroundColor: 'rgba(244,67,54,1)',
-        pointStyle: 'circle',
-        pointRadius: 5,
-        pointHoverRadius: 6,
-        fill: false,
+        type: 'line',
         showLine: false,
+        spanGaps: false,
+        borderColor: 'rgba(0,0,0,0)',
+        backgroundColor: 'rgba(244,67,54,1)',
+        pointBackgroundColor: 'rgba(244,67,54,1)',
+        pointBorderColor: 'rgba(244,67,54,1)',
+        pointStyle: 'circle',
+        pointRadius: 6,
+        pointHoverRadius: 7,
+        color: 'rgba(244,67,54,1)',
+        labelTextColor: 'rgba(244,67,54,1)',
+        inlineLabelColor: 'rgba(244,67,54,1)',
         borderWidth: 0,
         order: 9999,
         clip: false
       };
       if (existingIndex >= 0) {
-        chart.data.datasets[existingIndex].data = dataArray;
+        Object.assign(chart.data.datasets[existingIndex], markerDataset);
       } else {
         chart.data.datasets.push(markerDataset);
       }
@@ -4189,6 +4269,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
       removeUserDataset(incomeChartInstance, 'You');
       removeUserDataset(compositionChartInstance, 'You');
       removeUserDataset(netWorthChartInstance, 'You');
+      removeUserDataset(wealthCompositionChartInstance, 'You');
       removeUserDataset(provinceChartInstance, 'You');
       removeUserDataset(provinceIncomeChartInstance, 'You');
       removeUserDataset(scatterChartInstance, 'You');

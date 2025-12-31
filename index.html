@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Canada's Wealth Dashboard</title>
+  <meta name="description" content="WEALTHDASHBOARD.CA. See how you stack up financially against other Canadians. Public Canadian data. No signup required. Updated to 2026. All values in CAD." />
   <!-- Open Graph tags make the site attractive when shared on social media -->
   <meta property="og:title" content="Canada's Wealth Dashboard" />
   <meta property="og:description" content="Explore detailed charts of Canadian median income, net worth by age, wealth distribution and more. Built using multiple data sources for the most comprehensive view available." />
@@ -855,7 +856,7 @@
       <div class="hero-meta">
         <span class="meta-pill">Public Canadian data</span>
         <span class="meta-pill">No signup required</span>
-        <span class="meta-pill">Updated to 2026</span>
+        <span class="meta-pill">Updated to <span data-current-year></span></span>
         <span class="meta-pill">All values in CAD</span>
       </div>
     </section>
@@ -2817,6 +2818,7 @@
 
         data.datasets.forEach((ds, datasetIndex) => {
           const isYouMarker = String(ds?.label || '').toLowerCase() === 'you';
+          if (isYouMarker) return; // skip inline label for user line (custom label drawn separately)
           if (ds?.inlineLabel === false) return;
           const meta = chart.getDatasetMeta(datasetIndex);
           const isLineType = meta && (meta.type === 'line' || ds.type === 'line' || ds.showLine === true || isYouMarker);
@@ -2889,6 +2891,80 @@
 
     Chart.register(wealthDashboardWatermark);
     Chart.register(inlineLineLabels);
+
+    // Keep any "You" dataset on top and add a subtle red glow to its line
+    const youTopGlowPlugin = {
+      id: 'youTopGlow',
+      beforeUpdate(chart) {
+        const sets = Array.isArray(chart?.data?.datasets) ? chart.data.datasets : null;
+        if (!sets) return;
+        const you = [];
+        const others = [];
+        sets.forEach(ds => {
+          const isYou = String(ds?.label || '').toLowerCase() === 'you';
+          if (isYou) {
+            ds.order = 9999;
+            ds.z = 9999;
+            you.push(ds);
+          } else {
+            others.push(ds);
+          }
+        });
+        if (you.length) chart.data.datasets = [...others, ...you];
+      },
+      afterDatasetsDraw(chart) {
+        const ctx = chart?.ctx;
+        if (!ctx) return;
+        const metas = typeof chart.getSortedVisibleDatasetMetas === 'function'
+          ? chart.getSortedVisibleDatasetMetas()
+          : [];
+        metas.forEach(meta => {
+          const ds = chart.data?.datasets?.[meta.index];
+          const isYou = String(ds?.label || '').toLowerCase() === 'you';
+          const isLine = isYou && (meta.type === 'line' || ds?.type === 'line' || ds?.showLine === true);
+          if (!isLine || !meta?.dataset?.draw) return;
+          ctx.save();
+          // Solid red line with a subtle shadow
+          ctx.shadowColor = 'rgba(239, 83, 80, 0.5)';
+          ctx.shadowBlur = 8;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+          ctx.lineJoin = 'round';
+          ctx.lineCap = 'round';
+          const lw = (meta.dataset.options?.borderWidth || ds?.borderWidth || 2);
+          const origLineWidth = ctx.lineWidth;
+          ctx.lineWidth = lw;
+          meta.dataset.draw(ctx);
+          ctx.lineWidth = origLineWidth;
+          ctx.restore();
+
+          // Draw a readable "You" label at the right end on province bar charts
+          const canvasId = chart?.canvas?.id || '';
+          const isProvinceChart = canvasId.includes('province');
+          if (isProvinceChart && Array.isArray(meta.data) && meta.data.length) {
+            const lastPoint = meta.data[meta.data.length - 1];
+            if (lastPoint?.x != null && lastPoint?.y != null) {
+              const x = lastPoint.x + 10;
+              const y = lastPoint.y;
+              ctx.save();
+              ctx.font = '12px "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+              ctx.textAlign = 'left';
+              ctx.textBaseline = 'middle';
+              ctx.fillStyle = '#ef5350';
+              ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+              ctx.lineWidth = 3;
+              ctx.shadowColor = 'rgba(239, 83, 80, 0.5)';
+              ctx.shadowBlur = 8;
+              ctx.strokeText('You', x, y);
+              ctx.fillText('You', x, y);
+              ctx.restore();
+            }
+          }
+        });
+      }
+    };
+    Chart.register(youTopGlowPlugin);
+
     // Force the wealth composition net worth line to always render on top
     const wealthNetWorthTopLayer = {
       id: 'wealthNetWorthTopLayer',

@@ -85,6 +85,28 @@ body {
   }
 }
 
+/* Mobile results wrapping: let percentile cards wrap cleanly instead of overflowing */
+@media (max-width: 768px) {
+  .results-container {
+    display: flex !important;
+    flex-wrap: wrap;
+    flex-direction: row;
+    gap: 12px;
+  }
+  .results-container .result-card {
+    flex: 1 1 48%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .results-container .result-card {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
 /* --- Mobile title fit fix --- */
 @media (max-width: 600px) {
   .page-brand {
@@ -317,14 +339,15 @@ select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
     grid-template-columns: 1fr !important;
     gap: 12px;
   }
-  .control-actions {
-    justify-content: stretch;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .control-actions button {
-    width: 100%;
-  }
+.control-actions {
+  justify-content: stretch;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+.control-actions button {
+  width: 100%;
+}
   .profile-card {
     width: 100%;
     max-width: 100%;

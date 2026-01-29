@@ -30,8 +30,7 @@
       --primary-dark:#1E40AF;
 
       /* Percentiles (image vibe) */
-      --p10:#06B6D4;  /* cyan (new, fits palette) *
-      /
+      --p10:#06B6D4;  /* cyan (new, fits palette) */
       --p25:#3B82F6;  /* blue (new, fits palette) */
       --p50:#22C55E;  /* green (from image) */
       --p75:#EAB308;  /* amber (from image) */
@@ -61,13 +60,13 @@
       --accent: #00dcc8;
       --you-red: #ef5350;
     }
-    /* Info icon and tooltip */
+    /* Info icon base styles */
     .info-icon { 
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 16px;
-      height: 16px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
       background: transparent;
       color: #00bfa5;
@@ -78,71 +77,171 @@
       vertical-align: middle;
       flex-shrink: 0;
       flex: 0 0 auto;
-      visibility: visible !important;
-      opacity: 1 !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1.5px solid transparent;
+      z-index: 1;
+    }
+    .info-icon:hover {
+      background: rgba(0, 191, 165, 0.1);
+      border-color: rgba(0, 191, 165, 0.3);
+      box-shadow: 0 0 8px rgba(0, 191, 165, 0.2);
+      transform: scale(1.15);
+      z-index: 10001;
+    }
+    .info-icon:active {
+      transform: scale(1.05);
+      background: rgba(0, 191, 165, 0.15);
+    }
+    .info-icon:focus-visible {
+      outline: 2px solid rgba(0, 191, 165, 0.5);
+      outline-offset: 2px;
+      z-index: 10001;
     }
     .info-icon svg {
       width: 1rem;
       height: 1rem;
       flex-shrink: 0;
       color: #00bfa5;
-      display: block !important;
-      visibility: visible !important;
-      opacity: 1 !important;
+      display: block;
+      transition: transform 0.2s ease;
     }
-    .info-icon .info-tooltip { 
+    .info-icon:hover svg {
+      transform: rotate(15deg);
+    }
+    /* Tooltip - positioned directly beside the icon */
+    .info-tooltip { 
       visibility: hidden;
       opacity: 0;
-      transition: opacity .15s ease;
       position: absolute;
-      right: 100%;
-      left: auto;
-      transform: none;
-      top: calc(100% + 8px);
-      background: rgba(7, 18, 39, 0.98);
+      left: calc(100% + 10px);
+      top: 50%;
+      transform: translateY(-50%) translateX(4px);
+      background: linear-gradient(135deg, rgba(7, 18, 39, 0.98), rgba(10, 25, 45, 0.98));
       color: #e0e6ed;
       padding: 12px 16px;
       border-radius: 8px;
-      max-width: 900px;
-      font-size: 0.85rem;
-      line-height: 1.6;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
-      z-index: 9999;
+      width: max-content;
+      min-width: 180px;
+      max-width: 350px;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(0, 191, 165, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      z-index: 10000;
       text-align: left;
       pointer-events: none;
       white-space: normal;
       word-wrap: break-word;
+      transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.2s;
     }
-    /* Special positioning for the View as tooltip: top-left of box to bottom-right of icon */
-    #unitInfoIcon .info-tooltip {
-      left: 100%;
-      right: auto;
-      top: 100%;
-      transform: translate(6px, 4px);
-      max-width: 900px !important;
-      width: 700px !important;
-    }
-    .info-icon:hover .info-tooltip, .info-icon:focus .info-tooltip, .info-icon.focused .info-tooltip { 
+    /* Show tooltip on hover/focus */
+    .info-icon:hover .info-tooltip, 
+    .info-icon:focus .info-tooltip {
       visibility: visible;
       opacity: 1;
+      transform: translateY(-50%) translateX(0);
       pointer-events: auto;
     }
+    /* Arrow pointing left to the icon */
     .info-tooltip::after { 
       content: '';
       position: absolute;
-      top: -6px;
-      right: 10px;
-      transform: none;
-      border-width: 6px;
-      border-style: solid;
-      border-color: transparent transparent rgba(7, 18, 39, 0.98) transparent;
-      left: auto;
+      left: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-right: 6px solid rgba(7, 18, 39, 0.98);
     }
-    #unitInfoIcon .info-tooltip::after {
-      left: 10px;
-      right: auto;
+    /* When tooltip doesn't fit horizontally, show below */
+    .info-icon.tooltip-below .info-tooltip {
+      left: 50%;
+      top: calc(100% + 10px);
+      transform: translateX(-50%) translateY(-4px);
+    }
+    .info-icon.tooltip-below:hover .info-tooltip,
+    .info-icon.tooltip-below:focus .info-tooltip {
+      transform: translateX(-50%) translateY(0);
+    }
+    .info-icon.tooltip-below .info-tooltip::after {
+      left: 50%;
       top: -6px;
-      border-color: transparent transparent rgba(7, 18, 39, 0.98) transparent;
+      bottom: auto;
+      transform: translateX(-50%);
+      border-right: none;
+      border-top: none;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 6px solid rgba(7, 18, 39, 0.98);
+    }
+    /* Flip to left when near right edge */
+    .info-icon.tooltip-left .info-tooltip {
+      left: auto;
+      right: calc(100% + 10px);
+      transform: translateY(-50%) translateX(-4px);
+    }
+    .info-icon.tooltip-left:hover .info-tooltip,
+    .info-icon.tooltip-left:focus .info-tooltip {
+      transform: translateY(-50%) translateX(0);
+    }
+    .info-icon.tooltip-left .info-tooltip::after {
+      left: auto;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-right: none;
+      border-left: 6px solid rgba(7, 18, 39, 0.98);
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+    }
+    /* Tooltip content formatting */
+    .info-tooltip strong {
+      color: #00dcc8;
+      font-weight: 600;
+    }
+    /* Handle line breaks in tooltip */
+    .info-tooltip br {
+      line-height: 1.8;
+    }
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+      .info-tooltip {
+        max-width: min(300px, calc(100vw - 40px));
+        font-size: 0.78rem;
+        padding: 10px 14px;
+      }
+      .info-icon {
+        width: 22px;
+        height: 22px;
+      }
+    }
+    /* For very small screens, center tooltips */
+    @media (max-width: 480px) {
+      .info-tooltip {
+        left: 50% !important;
+        right: auto !important;
+        top: calc(100% + 10px) !important;
+        transform: translateX(-50%) translateY(-4px) !important;
+        max-width: calc(100vw - 30px);
+      }
+      .info-icon:hover .info-tooltip,
+      .info-icon:focus .info-tooltip {
+        transform: translateX(-50%) translateY(0) !important;
+      }
+      .info-tooltip::after {
+        left: 50% !important;
+        right: auto !important;
+        top: -6px !important;
+        transform: translateX(-50%) !important;
+        border-right: none !important;
+        border-left: 6px solid transparent !important;
+        border-right: 6px solid transparent !important;
+        border-bottom: 6px solid rgba(7, 18, 39, 0.98) !important;
+      }
     }
 
     /* Custom Chart.js external tooltip styles (tactile, elevated, responsive) */
@@ -406,12 +505,52 @@
       white-space: normal;
       position: relative;
       z-index: 1;
+      padding-right: 34px;
+    }
+    .chart-card .chart-info-icon {
+      position: absolute;
+      top: 0;
+      right: 10px;
+      margin-left: 0;
+      transform: translateY(2px);
     }
     .chart-container {
       position: relative;
       width: 100%;
       aspect-ratio: 1.618 / 1;
       padding-bottom: 0px; /* minimize reserved space; handled via chart padding */
+    }
+    .chart-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      background: rgba(11, 18, 32, 0.45);
+      border-radius: 12px;
+      z-index: 1;
+    }
+    .chart-loading-error {
+      color: #fca5a5;
+      font-weight: 600;
+    }
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--bg-surface);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .chart-canvas {
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .chart-canvas.is-ready {
+      opacity: 1;
     }
     .chart-card canvas {
       width: 100% !important;
@@ -635,18 +774,186 @@
       padding:6px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06); background:#071229; color:#e6f4ff;
       box-shadow: none; outline: none; min-width:60px;
     }
-    .btn-primary { padding:10px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:600; line-height:1.2; }
-    .btn-compare { background:#ef5350; color:#fff; }
+    .btn-primary { 
+      padding: 12px 24px;
+      border-radius: 10px; 
+      border: none; 
+      cursor: pointer; 
+      font-weight: 600; 
+      line-height: 1.2;
+      font-size: 15px;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      outline: none;
+    }
+    .btn-compare { 
+      background: linear-gradient(135deg, #ef5350 0%, #e53935 100%);
+      color: #fff;
+      padding: 12px 24px;
+      font-size: 15px;
+      box-shadow: 
+        0 2px 8px rgba(239, 83, 80, 0.3),
+        0 1px 2px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transform: translateY(0);
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-compare:hover {
+      background: linear-gradient(135deg, #f44336 0%, #ef5350 100%);
+      box-shadow: 
+        0 4px 16px rgba(239, 83, 80, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+    .btn-compare:active {
+      background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
+      box-shadow: 
+        0 1px 3px rgba(239, 83, 80, 0.2),
+        inset 0 2px 4px rgba(0, 0, 0, 0.2);
+      transform: translateY(1px);
+      transition: all 0.05s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-compare:focus-visible {
+      outline: 2px solid rgba(239, 83, 80, 0.5);
+      outline-offset: 2px;
+    }
+    .btn-compare::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    .btn-compare.ripple::before {
+      width: 300px;
+      height: 300px;
+      opacity: 0;
+    }
     .btn-reset {
       background: transparent;
-      color:#cbd5e1;
-      border: 1px solid var(--border-subtle);
+      color: #cbd5e1;
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 
+        0 0 0 0 rgba(203, 213, 225, 0),
+        inset 0 0 0 0 rgba(255, 255, 255, 0);
     }
-    .btn-reset:hover{
-      border-color: rgba(255,255,255,0.35);
-      background: rgba(255,255,255,0.05);
+    .btn-reset:hover {
+      border-color: rgba(203, 213, 225, 0.4);
+      background: rgba(255, 255, 255, 0.04);
+      color: #e0e6ed;
+      box-shadow: 
+        0 0 12px rgba(203, 213, 225, 0.15),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px) scale(1.01);
     }
-    .btn-project { background:#ef5350; color:#fff; }
+    .btn-reset:active {
+      border-color: rgba(203, 213, 225, 0.25);
+      background: rgba(255, 255, 255, 0.02);
+      color: #cbd5e1;
+      box-shadow: 
+        0 0 4px rgba(203, 213, 225, 0.1),
+        inset 0 1px 3px rgba(0, 0, 0, 0.15);
+      transform: translateY(0) scale(0.98);
+      transition: all 0.06s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-reset:focus-visible {
+      outline: 2px solid rgba(203, 213, 225, 0.4);
+      outline-offset: 2px;
+      border-color: rgba(203, 213, 225, 0.5);
+    }
+    .btn-reset::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 100%
+      );
+      transition: left 0.5s ease;
+    }
+    .btn-reset:hover::before {
+      left: 100%;
+    }
+    @keyframes resetPulse {
+      0% {
+        box-shadow: 
+          0 0 0 0 rgba(203, 213, 225, 0.4),
+          inset 0 1px 3px rgba(0, 0, 0, 0.15);
+      }
+      50% {
+        box-shadow: 
+          0 0 0 4px rgba(203, 213, 225, 0),
+          inset 0 1px 3px rgba(0, 0, 0, 0.15);
+      }
+      100% {
+        box-shadow: 
+          0 0 0 0 rgba(203, 213, 225, 0),
+          inset 0 1px 3px rgba(0, 0, 0, 0.15);
+      }
+    }
+    .btn-reset.pulse {
+      animation: resetPulse 0.5s ease-out;
+    }
+    .btn-project { 
+      background: linear-gradient(135deg, #ef5350 0%, #e53935 100%);
+      color: #fff;
+      box-shadow: 
+        0 2px 8px rgba(239, 83, 80, 0.3),
+        0 1px 2px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-project:hover {
+      background: linear-gradient(135deg, #f44336 0%, #ef5350 100%);
+      box-shadow: 
+        0 4px 16px rgba(239, 83, 80, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
+    }
+    .btn-project:active {
+      background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
+      box-shadow: 
+        0 1px 3px rgba(239, 83, 80, 0.2),
+        inset 0 2px 4px rgba(0, 0, 0, 0.2);
+      transform: translateY(1px);
+      transition: all 0.05s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-project::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    .btn-project.ripple::before {
+      width: 300px;
+      height: 300px;
+      opacity: 0;
+    }
     .insight-panel { width:100%; }
     @media (min-width:880px) {
       .controls-row { justify-content:space-between; }
@@ -749,6 +1056,31 @@
     .field-feedback.is-valid::before{
       content: "✓";
       font-size: 12px;
+    }
+    .calc-indicator{
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #9fb6c8;
+      margin-top: 6px;
+    }
+    .calc-indicator.is-visible{
+      display: inline-flex;
+    }
+    .calc-indicator::before{
+      content: "";
+      width: 10px;
+      height: 10px;
+      border: 2px solid rgba(159,182,200,0.4);
+      border-top-color: #9fb6c8;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin{
+      from{ transform: rotate(0deg); }
+      to{ transform: rotate(360deg); }
     }
     .control-input.is-error, .control-select.is-error{
       border-color: rgba(248,113,113,0.9);
@@ -952,7 +1284,7 @@
       <div class="hero-meta">
         <span class="meta-pill">Public Canadian data</span>
         <span class="meta-pill">No signup required</span>
-        <span class="meta-pill">Updated to <span data-current-year></span></span>
+        <span class="meta-pill">Updated to 2026</span>
         <span class="meta-pill">All values in CAD</span>
       </div>
     </section>
@@ -1038,6 +1370,7 @@
         </div>
       </div>
       <div id="inputWarning" class="input-warning" aria-live="polite"></div>
+      <div id="calculatingIndicator" class="calc-indicator" aria-live="polite">Calculating...</div>
     </div>
     </section>
     </div>
@@ -1112,10 +1445,14 @@
       <!-- Median Income Chart (current-year estimate) -->
       <div class="chart-card">
         <h3 id="incomeTitle">Estimated Employment Income by Age (Individuals, <span data-current-year></span>)
-          <span class="info-icon" tabindex="0" role="button" data-year-attr="aria-label" data-year-aria-label="Chart info: Estimated {YEAR} employment income by age with percentile ranges."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows estimated <span data-current-year></span> employment income by age, including median and percentile ranges, adjusted for your selected province and household/individual view.</span></span>
+          <span class="info-icon chart-info-icon" tabindex="0" role="button" data-year-attr="aria-label" data-year-aria-label="Chart info: Estimated {YEAR} employment income by age with percentile ranges."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows estimated <span data-current-year></span> employment income by age, including median and percentile ranges, adjusted for your selected province and household/individual view.</span></span>
         </h3>
         <div class="chart-container">
-          <canvas id="incomeChart"></canvas>
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <span>Loading chart...</span>
+          </div>
+          <canvas id="incomeChart" class="chart-canvas" style="display:none;"></canvas>
         </div>
         <details class="source-box">
           <summary>Sources &amp; Methods</summary>
@@ -1141,10 +1478,14 @@
       <!-- Median Net Worth Chart (current-year estimate) -->
       <div class="chart-card">
         <h3 id="netWorthTitle">Estimated Net Worth by Age (Households, <span data-current-year></span>)
-          <span class="info-icon" tabindex="0" role="button" data-year-attr="aria-label" data-year-aria-label="Chart info: Estimated {YEAR} net worth by age with percentile ranges."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows estimated <span data-current-year></span> median net worth by age, including typical accumulation during working years and gradual drawdown in retirement, adjusted for your selected province and household/individual view.</span></span>
+          <span class="info-icon chart-info-icon" tabindex="0" role="button" data-year-attr="aria-label" data-year-aria-label="Chart info: Estimated {YEAR} net worth by age with percentile ranges."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows estimated <span data-current-year></span> median net worth by age, including typical accumulation during working years and gradual drawdown in retirement, adjusted for your selected province and household/individual view.</span></span>
         </h3>
         <div class="chart-container">
-          <canvas id="netWorthChart"></canvas>
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <span>Loading chart...</span>
+          </div>
+          <canvas id="netWorthChart" class="chart-canvas" style="display:none;"></canvas>
         </div>
         <details class="source-box">
           <summary>Sources &amp; Methods</summary>
@@ -1170,10 +1511,14 @@
       <!-- Income composition breakdown chart (current-year) -->
       <div class="chart-card">
         <h3 id="compositionTitle">Median Income Composition by Age (Households, <span data-current-year></span>)
-          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Income composition by age."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows how employment income, investment income, pensions, and transfers contribute to total income at each age.</span></span>
+          <span class="info-icon chart-info-icon" tabindex="0" role="button" aria-label="Chart info: Income composition by age."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows how employment income, investment income, pensions, and transfers contribute to total income at each age.</span></span>
         </h3>
         <div class="chart-container">
-          <canvas id="compositionChart"></canvas>
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <span>Loading chart...</span>
+          </div>
+          <canvas id="compositionChart" class="chart-canvas" style="display:none;"></canvas>
         </div>
         <details class="source-box">
           <summary>Sources &amp; Methods</summary>
@@ -1198,10 +1543,14 @@
       <!-- Median Wealth Composition by Age (stacked area) -->
       <div class="chart-card">
         <h3 id="wealthCompositionTitle">Median Wealth Composition by Age (Households, <span data-current-year></span>)
-          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Wealth composition by age."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows how real estate, financial assets, pensions, and debt typically change with age, along with resulting net worth.</span></span>
+          <span class="info-icon chart-info-icon" tabindex="0" role="button" aria-label="Chart info: Wealth composition by age."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows how real estate, financial assets, pensions, and debt typically change with age, along with resulting net worth.</span></span>
         </h3>
         <div class="chart-container">
-          <canvas id="wealthCompositionChart"></canvas>
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <span>Loading chart...</span>
+          </div>
+          <canvas id="wealthCompositionChart" class="chart-canvas" style="display:none;"></canvas>
         </div>
         <details class="source-box">
           <summary>Sources &amp; Methods</summary>
@@ -1230,10 +1579,14 @@
       <!-- Income Distribution (Histogram) -->
       <div class="chart-card">
         <h3 id="percentileIncomeTitle">Income Distribution (Histogram, <span data-current-year></span>)
-          <span class="info-icon" tabindex="0" role="button" data-year-attr="aria-label" data-year-aria-label="Chart info: Income distribution histogram ({YEAR})."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows the estimated distribution of employment income in <span data-current-year></span> for your selected province and household/individual view.</span></span>
+          <span class="info-icon chart-info-icon" tabindex="0" role="button" data-year-attr="aria-label" data-year-aria-label="Chart info: Income distribution histogram ({YEAR})."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows the estimated distribution of employment income in <span data-current-year></span> for your selected province and household/individual view.</span></span>
         </h3>
         <div class="chart-container">
-          <canvas id="percentileIncomeChart"></canvas>
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <span>Loading chart...</span>
+          </div>
+          <canvas id="percentileIncomeChart" class="chart-canvas" style="display:none;"></canvas>
         </div>
         <details class="source-box">
           <summary>Sources &amp; Methods</summary>
@@ -1257,10 +1610,14 @@
       <!-- Net Worth Distribution (Histogram) -->
       <div class="chart-card">
         <h3 id="percentileNetWorthTitle">Net Worth Distribution (Histogram, <span data-current-year></span>)
-          <span class="info-icon" tabindex="0" role="button" data-year-attr="aria-label" data-year-aria-label="Chart info: Net worth distribution histogram ({YEAR})."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows the estimated distribution of household net worth in <span data-current-year></span> for your selected province and household/individual view.</span></span>
+          <span class="info-icon chart-info-icon" tabindex="0" role="button" data-year-attr="aria-label" data-year-aria-label="Chart info: Net worth distribution histogram ({YEAR})."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows the estimated distribution of household net worth in <span data-current-year></span> for your selected province and household/individual view.</span></span>
         </h3>
         <div class="chart-container">
-          <canvas id="percentileNetWorthChart"></canvas>
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <span>Loading chart...</span>
+          </div>
+          <canvas id="percentileNetWorthChart" class="chart-canvas" style="display:none;"></canvas>
         </div>
         <details class="source-box">
           <summary>Sources &amp; Methods</summary>
@@ -1284,10 +1641,14 @@
       <!-- Median Income by Province (current-year) -->
       <div class="chart-card">
         <h3 id="provinceIncomeTitle">Median Income by Province (<span data-current-year></span>)
-          <span class="info-icon" tabindex="0" role="button" data-year-attr="aria-label" data-year-aria-label="Chart info: Median income by province with percentile whiskers ({YEAR})."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows median employment income across provinces in <span data-current-year></span>, with whiskers marking the 10th and 90th percentile ranges.</span></span>
+          <span class="info-icon chart-info-icon" tabindex="0" role="button" data-year-attr="aria-label" data-year-aria-label="Chart info: Median income by province with percentile whiskers ({YEAR})."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows median employment income across provinces in <span data-current-year></span>, with whiskers marking the 10th and 90th percentile ranges.</span></span>
         </h3>
         <div class="chart-container">
-          <canvas id="provinceIncomeChart"></canvas>
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <span>Loading chart...</span>
+          </div>
+          <canvas id="provinceIncomeChart" class="chart-canvas" style="display:none;"></canvas>
         </div>
         <details class="source-box">
           <summary>Sources &amp; Methods</summary>
@@ -1311,10 +1672,14 @@
       <!-- Projected Median Net Worth by Province (current-year) -->
       <div class="chart-card">
         <h3 id="provinceTitle">Projected Median Net Worth by Province (<span data-current-year></span>)
-          <span class="info-icon" tabindex="0" role="button" data-year-attr="aria-label" data-year-aria-label="Chart info: Projected {YEAR} median net worth by province with percentile whiskers."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows projected <span data-current-year></span> median net worth by province, with whiskers marking the 10th and 90th percentile ranges.</span></span>
+          <span class="info-icon chart-info-icon" tabindex="0" role="button" data-year-attr="aria-label" data-year-aria-label="Chart info: Projected {YEAR} median net worth by province with percentile whiskers."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows projected <span data-current-year></span> median net worth by province, with whiskers marking the 10th and 90th percentile ranges.</span></span>
         </h3>
         <div class="chart-container">
-          <canvas id="provinceChart"></canvas>
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <span>Loading chart...</span>
+          </div>
+          <canvas id="provinceChart" class="chart-canvas" style="display:none;"></canvas>
         </div>
         <details class="source-box">
           <summary>Sources &amp; Methods</summary>
@@ -1338,10 +1703,14 @@
       <!-- Income Percentile by Gender -->
       <div class="chart-card">
         <h3 id="genderIncomeTitle">Income Percentile by Gender (<span data-current-year></span>)
-          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Median income by gender and age."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Compares women's and men's median employment income by age, adjusted for province and household/individual view. Shaded bands show the range between the 10th and 90th percentiles for men and women.</span></span>
+          <span class="info-icon chart-info-icon" tabindex="0" role="button" aria-label="Chart info: Median income by gender and age."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Compares women's and men's median employment income by age, adjusted for province and household/individual view. Shaded bands show the range between the 10th and 90th percentiles for men and women.</span></span>
         </h3>
         <div class="chart-container">
-          <canvas id="genderIncomeChart"></canvas>
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <span>Loading chart...</span>
+          </div>
+          <canvas id="genderIncomeChart" class="chart-canvas" style="display:none;"></canvas>
         </div>
         <details class="source-box">
           <summary>Sources &amp; Methods</summary>
@@ -1364,11 +1733,15 @@
       <!-- Income vs Net Worth Scatter Plot (current-year) -->
       <div class="chart-card">
         <h3 id="scatterTitle">Median Income vs Net Worth by Age (Households, <span data-current-year></span>) - Canada
-          <span class="info-icon" tabindex="0" role="button" aria-label="Chart info: Income and net worth relationship by age."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows how median income at each age relates to median net worth, using consistent smoothing and inflation adjustments.</span></span>
+          <span class="info-icon chart-info-icon" tabindex="0" role="button" aria-label="Chart info: Income and net worth relationship by age."><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="#00bfa5" stroke-width="1.4" fill="none"></circle><text x="12" y="15" text-anchor="middle" fill="#00bfa5" font-size="10" font-weight="bold">i</text></svg><span class="info-tooltip">Shows how median income at each age relates to median net worth, using consistent smoothing and inflation adjustments.</span></span>
         </h3>
-      <div class="chart-container">
-        <canvas id="scatterChart"></canvas>
-      </div>
+        <div class="chart-container">
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <span>Loading chart...</span>
+          </div>
+          <canvas id="scatterChart" class="chart-canvas" style="display:none;"></canvas>
+        </div>
       <details class="source-box">
         <summary>Sources &amp; Methods</summary>
           <div class="source-content">
@@ -1502,6 +1875,58 @@
   <script src="scripts/vibe-utils.js"></script>
   <script src="scripts/chart-strategies.js"></script>
   <script>
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // Cache frequently accessed DOM nodes to reduce repeated lookups.
+    const DOM = {
+      userAge: null,
+      userIncome: null,
+      userNetWorth: null,
+      savingsRate: null,
+      targetAge: null,
+      provinceSelect: null,
+      unitSelect: null,
+      inputWarning: null,
+      calculatingIndicator: null,
+      resultTiles: null,
+      projectionSection: null,
+      projCard: null,
+      median65Card: null,
+      requiredRateCard: null,
+      usingBehind: null,
+      usingOnTrack: null,
+      usingAhead: null,
+      init: function() {
+        this.userAge = document.getElementById('userAge');
+        this.userIncome = document.getElementById('userIncome');
+        this.userNetWorth = document.getElementById('userNetWorth');
+        this.savingsRate = document.getElementById('savingsRate');
+        this.targetAge = document.getElementById('targetAge');
+        this.provinceSelect = document.getElementById('provinceSelect');
+        this.unitSelect = document.getElementById('unitSelect');
+        this.inputWarning = document.getElementById('inputWarning');
+        this.calculatingIndicator = document.getElementById('calculatingIndicator');
+        this.resultTiles = document.getElementById('resultTiles');
+        this.projectionSection = document.getElementById('projectionSection');
+        this.projCard = document.getElementById('projCard');
+        this.median65Card = document.getElementById('median65Card');
+        this.requiredRateCard = document.getElementById('requiredRateCard');
+        this.usingBehind = document.getElementById('usingBehind');
+        this.usingOnTrack = document.getElementById('usingOnTrack');
+        this.usingAhead = document.getElementById('usingAhead');
+      }
+    };
+
     // ===== Mobile Chart.js density tuning =====
     function isMobileChart() {
       return window.matchMedia('(max-width: 600px)').matches;
@@ -2001,7 +2426,7 @@
         // Only add the 'You' marker after the user submits a comparison.
         if (userActive && userIncome) {
           const youData = new Array(ageLabels.length).fill(null);
-          const ua = (typeof userAgeVal === 'number' ? userAgeVal : parseInt(document.getElementById('userAge')?.value,10) || 18);
+          const ua = (typeof userAgeVal === 'number' ? userAgeVal : parseInt(DOM.userAge?.value,10) || 18);
           const idx = Math.max(0, Math.min(ageLabels.length - 1, ua - AGE_START));
           youData[idx] = userIncome;
           datasets.push({
@@ -2050,7 +2475,7 @@
         if (userActive && userNetWorth) {
           // Show a single red dot at the user's age rather than a full horizontal line.
           const youData = new Array(ageLabels.length).fill(null);
-          const ua = (typeof userAgeVal === 'number' ? userAgeVal : parseInt(document.getElementById('userAge')?.value,10) || 18);
+          const ua = (typeof userAgeVal === 'number' ? userAgeVal : parseInt(DOM.userAge?.value,10) || 18);
           const idx = Math.max(0, Math.min(ageLabels.length - 1, ua - AGE_START));
           youData[idx] = userNetWorth;
           datasets.push({
@@ -3750,7 +4175,7 @@
     function updateCharts(region) {
       const incomeRatio = incomeRatios[region] || 1;
       const netRatio = netWorthRatios[region] || 1;
-      const unitEl = document.getElementById('unitSelect');
+      const unitEl = DOM.unitSelect;
       const unit = unitEl ? unitEl.value : 'households';
       // Show core percentile lines by default: 10th, 25th, 75th, 90th (median always included)
       const selectedPcts = DISPLAY_QUINTILES;
@@ -4513,7 +4938,10 @@
      * @param {string} type - Chart type (line or bar)
      */
 function createChart(canvasId, dataInfo, type = 'line') {
-  const ctx = document.getElementById(canvasId).getContext('2d');
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const container = canvas ? canvas.closest('.chart-container') : null;
+  const loadingEl = container ? container.querySelector('.chart-loading') : null;
   const axisLabels = dataInfo.axisLabels || {};
   const isMobile = isMobileChart();
   const tickFontSize = dataInfo.tickFontSize || (isMobile ? 10 : 12);
@@ -4755,7 +5183,22 @@ function createChart(canvasId, dataInfo, type = 'line') {
     options.plugins.tooltip = Object.assign({}, options.plugins.tooltip, dataInfo.tooltip);
   }
 
-  const chartInstance = new Chart(ctx, { type, data: { labels, datasets }, options });
+  let chartInstance;
+  try {
+    chartInstance = new Chart(ctx, { type, data: { labels, datasets }, options });
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (canvas) {
+      canvas.style.display = 'block';
+      canvas.classList.add('is-ready');
+    }
+  } catch (error) {
+    if (loadingEl) {
+      loadingEl.innerHTML = '<span class="chart-loading-error">Failed to load chart</span>';
+      loadingEl.style.display = 'flex';
+    }
+    if (canvas) canvas.style.display = 'none';
+    throw error;
+  }
   if (!allCharts.includes(chartInstance)) allCharts.push(chartInstance);
   chartInstance.__step = dataInfo.step || null;
   return chartInstance;
@@ -4790,6 +5233,8 @@ function createChart(canvasId, dataInfo, type = 'line') {
         console.warn('Chart init error UI could not be rendered', error);
         return;
       }
+      const loadingEl = container.querySelector('.chart-loading');
+      if (loadingEl) loadingEl.style.display = 'none';
       container.querySelectorAll('.chart-init-error').forEach(el => el.remove());
       const panel = document.createElement('div');
       panel.className = 'chart-init-error';
@@ -5040,7 +5485,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
       }, 'bar');
       percentileIncomeChartInstance.options.plugins.userVLine = { xValue: null };
       // Hook up the dropdown to update the charts when a region is selected
-      const select = document.getElementById('provinceSelect');
+      const select = DOM.provinceSelect;
       select.addEventListener('change', function() {
         const region = this.value;
         updateCharts(region);
@@ -5057,7 +5502,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
         legacyUpdateCharts(region);
         // Determine the selected unit (households or individuals).  Fallback to
         // households if the select element is not found.
-        const unitEl = document.getElementById('unitSelect');
+        const unitEl = DOM.unitSelect;
         const unit = unitEl ? unitEl.value : 'households';
         // Default percentiles to display: 10th, 25th, 75th, 90th. Median (p50) always included.
         const selectedPcts = DISPLAY_QUINTILES;
@@ -5069,10 +5514,10 @@ function createChart(canvasId, dataInfo, type = 'line') {
 
       // Percentiles are always shown by default; no selector to watch.
       // Unit selector: switch between Households and Individuals across all charts
-      const unitSelectEl = document.getElementById('unitSelect');
+      const unitSelectEl = DOM.unitSelect;
       if (unitSelectEl) {
         unitSelectEl.addEventListener('change', function() {
-          const region = document.getElementById('provinceSelect').value;
+          const region = DOM.provinceSelect ? DOM.provinceSelect.value : 'Canada';
           updateCharts(region);
         });
       }
@@ -5104,6 +5549,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
     // Setup nav interactions and lazy initialization once DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
       validateDataObjectsOnLoad();
+      DOM.init();
       setupNav();
       setupInputValidation();
       const firstSection = document.getElementById('section-income-charts');
@@ -5148,11 +5594,11 @@ function createChart(canvasId, dataInfo, type = 'line') {
     }
 
     function setupInputValidation() {
-      const ageEl = document.getElementById('userAge');
-      const incomeEl = document.getElementById('userIncome');
-      const netWorthEl = document.getElementById('userNetWorth');
-      const savingsEl = document.getElementById('savingsRate');
-      const targetEl = document.getElementById('targetAge');
+      const ageEl = DOM.userAge;
+      const incomeEl = DOM.userIncome;
+      const netWorthEl = DOM.userNetWorth;
+      const savingsEl = DOM.savingsRate;
+      const targetEl = DOM.targetAge;
 
       if (ageEl) {
         const handler = () => {
@@ -5162,30 +5608,82 @@ function createChart(canvasId, dataInfo, type = 'line') {
             validateFieldLive('targetAge', getTargetAgeMin(), 100, 'Target age', 'targetAgeFeedback');
           }
         };
-        ageEl.addEventListener('input', handler);
-        ageEl.addEventListener('blur', handler);
+        const debouncedHandler = debounce(() => {
+          handler();
+          hideCalculatingIndicator();
+        }, 300);
+        ageEl.addEventListener('input', () => {
+          showCalculatingIndicator();
+          debouncedHandler();
+        });
+        ageEl.addEventListener('blur', () => {
+          hideCalculatingIndicator();
+          handler();
+        });
       }
       if (incomeEl) {
         const handler = () => validateFieldLive('userIncome', 0, 10000000, 'Income', 'userIncomeFeedback');
-        incomeEl.addEventListener('input', handler);
-        incomeEl.addEventListener('blur', handler);
+        const debouncedHandler = debounce(() => {
+          handler();
+          hideCalculatingIndicator();
+        }, 300);
+        incomeEl.addEventListener('input', () => {
+          showCalculatingIndicator();
+          debouncedHandler();
+        });
+        incomeEl.addEventListener('blur', () => {
+          hideCalculatingIndicator();
+          handler();
+        });
       }
       if (netWorthEl) {
         const handler = () => validateFieldLive('userNetWorth', -1000000, 50000000, 'Net worth', 'userNetWorthFeedback');
-        netWorthEl.addEventListener('input', handler);
-        netWorthEl.addEventListener('blur', handler);
+        const debouncedHandler = debounce(() => {
+          handler();
+          hideCalculatingIndicator();
+        }, 300);
+        netWorthEl.addEventListener('input', () => {
+          showCalculatingIndicator();
+          debouncedHandler();
+        });
+        netWorthEl.addEventListener('blur', () => {
+          hideCalculatingIndicator();
+          handler();
+        });
       }
       if (savingsEl) {
         const handler = () => validateFieldLive('savingsRate', 0, 100, 'Savings rate', 'savingsRateFeedback');
-        savingsEl.addEventListener('input', handler);
-        savingsEl.addEventListener('blur', handler);
+        const debouncedHandler = debounce(() => {
+          handler();
+          hideCalculatingIndicator();
+        }, 300);
+        savingsEl.addEventListener('input', () => {
+          showCalculatingIndicator();
+          debouncedHandler();
+        });
+        savingsEl.addEventListener('blur', () => {
+          hideCalculatingIndicator();
+          handler();
+        });
       }
       if (targetEl) {
         const handler = () => validateFieldLive('targetAge', getTargetAgeMin(), 100, 'Target age', 'targetAgeFeedback');
-        targetEl.addEventListener('input', handler);
-        targetEl.addEventListener('blur', handler);
+        const debouncedHandler = debounce(() => {
+          handler();
+          hideCalculatingIndicator();
+        }, 300);
+        targetEl.addEventListener('input', () => {
+          showCalculatingIndicator();
+          debouncedHandler();
+        });
+        targetEl.addEventListener('blur', () => {
+          hideCalculatingIndicator();
+          handler();
+        });
       }
     }
+
+    
 
     // Flags and storage for user input comparison
     let userActive = false;
@@ -5197,6 +5695,16 @@ function createChart(canvasId, dataInfo, type = 'line') {
       if (num < min) return { valid: false, error: `${fieldName} must be at least ${min}` };
       if (num > max) return { valid: false, error: `${fieldName} must be no more than ${max}` };
       return { valid: true, value: num };
+    }
+
+    function showCalculatingIndicator() {
+      const el = DOM.calculatingIndicator;
+      if (el) el.classList.add('is-visible');
+    }
+
+    function hideCalculatingIndicator() {
+      const el = DOM.calculatingIndicator;
+      if (el) el.classList.remove('is-visible');
     }
 
     function applyFieldFeedback(inputEl, feedbackEl, result, showValid, showError) {
@@ -5221,7 +5729,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
     }
 
     function getTargetAgeMin() {
-      const ageEl = document.getElementById('userAge');
+      const ageEl = DOM.userAge;
       const ageVal = ageEl ? parseFloat(ageEl.value) : NaN;
       if (!Number.isFinite(ageVal)) return 19;
       return Math.min(100, Math.floor(ageVal) + 1);
@@ -5258,7 +5766,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
       results.push({ name: 'Net worth', id: 'userNetWorth', res: validateFieldForSubmit('userNetWorth', -1000000, 50000000, 'Net worth', 'userNetWorthFeedback') });
       const invalid = results.filter(r => !r.res.valid).map(r => r.name);
       if (showSummary) {
-        const warnEl = document.getElementById('inputWarning');
+        const warnEl = DOM.inputWarning;
         if (warnEl) warnEl.textContent = invalid.length ? `Please fix: ${invalid.join(', ')}` : '';
       }
       return {
@@ -5277,7 +5785,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
       if (!sr.valid) invalid.push('Savings rate');
       if (!tgt.valid) invalid.push('Target age');
       if (showSummary) {
-        const warnEl = document.getElementById('inputWarning');
+        const warnEl = DOM.inputWarning;
         if (warnEl) warnEl.textContent = invalid.length ? `Please fix: ${invalid.join(', ')}` : '';
       }
       return { allValid: invalid.length === 0, savingsRate: sr.value, targetAge: tgt.value };
@@ -5299,7 +5807,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
      * notifies the user.
      */
     function plotUserData() {
-      const warnEl = document.getElementById('inputWarning');
+      const warnEl = DOM.inputWarning;
       const setWarn = (msg='') => { if (warnEl) warnEl.textContent = msg; };
       const core = validateCoreInputs(true);
       if (!core.allValid) return;
@@ -5307,7 +5815,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
       const clampedAge = Math.min(core.age, 80);
       if (core.age > 80) {
         warnings.push('Age capped to 80 (data coverage limit).');
-        const ageEl = document.getElementById('userAge');
+        const ageEl = DOM.userAge;
         if (ageEl) {
           ageEl.value = clampedAge;
           validateFieldLive('userAge', 18, 100, 'Age', 'userAgeFeedback');
@@ -5321,7 +5829,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
       userIncomeVal = core.income;
       userNetWorthVal = core.netWorth;
       // After storing the user values, rescale all charts to include the new marker and redraw
-      const region = document.getElementById('provinceSelect').value;
+      const region = DOM.provinceSelect ? DOM.provinceSelect.value : 'Canada';
       updateCharts(region);
       // Update insight panel text after charts are refreshed
       try{ showYouVsEveryone(); }catch(e){}
@@ -5346,10 +5854,10 @@ function createChart(canvasId, dataInfo, type = 'line') {
       addUserPointToScatter(scatterChartInstance, userIncomeVal, userNetWorthVal, 'You');
       // Update vertical dashed user percentile lines on percentile charts
       try {
-        const region = document.getElementById('provinceSelect').value;
+        const region = DOM.provinceSelect ? DOM.provinceSelect.value : 'Canada';
         // Rebuild percentile curves for current region
         const provinceIndex = baseProvinceLabels.indexOf(region);
-        const unitEl = document.getElementById('unitSelect');
+        const unitEl = DOM.unitSelect;
         const unit = unitEl ? unitEl.value : 'households';
         const equivalenceScale = Math.sqrt(DEFAULT_HOUSEHOLD_SIZE);
         const nationalMedianNetWorthHousehold = 652286;
@@ -5498,25 +6006,26 @@ function createChart(canvasId, dataInfo, type = 'line') {
       userIncomeVal = null;
       userNetWorthVal = null;
       // Reset input fields
-      const ageEl = document.getElementById('userAge');
-      const incEl = document.getElementById('userIncome');
-      const nwEl = document.getElementById('userNetWorth');
+      const ageEl = DOM.userAge;
+      const incEl = DOM.userIncome;
+      const nwEl = DOM.userNetWorth;
       if (ageEl) ageEl.value = '';
       if (incEl) incEl.value = '';
       if (nwEl) nwEl.value = '';
       // Reset dropdowns to defaults
-      const provEl = document.getElementById('provinceSelect');
-      const unitEl = document.getElementById('unitSelect');
+      const provEl = DOM.provinceSelect;
+      const unitEl = DOM.unitSelect;
       if (provEl) provEl.value = 'Canada';
       if (unitEl) unitEl.value = 'households';
-      const warnEl = document.getElementById('inputWarning');
+      const warnEl = DOM.inputWarning;
       if (warnEl) warnEl.textContent = '';
+      hideCalculatingIndicator();
       clearFieldFeedback('userAge', 'userAgeFeedback');
       clearFieldFeedback('userIncome', 'userIncomeFeedback');
       clearFieldFeedback('userNetWorth', 'userNetWorthFeedback');
       clearFieldFeedback('savingsRate', 'savingsRateFeedback');
       clearFieldFeedback('targetAge', 'targetAgeFeedback');
-      const targetAgeEl = document.getElementById('targetAge');
+      const targetAgeEl = DOM.targetAge;
       if (targetAgeEl) targetAgeEl.min = '19';
 
       // Remove user overlays from charts
@@ -5541,11 +6050,11 @@ function createChart(canvasId, dataInfo, type = 'line') {
       // Hide insight tiles and projection section if present
       try{ showYouVsEveryone(); }catch(e){}
       try{
-        const tiles = document.getElementById('resultTiles'); if (tiles) tiles.style.display = 'none';
-        const projSection = document.getElementById('projectionSection'); if (projSection) projSection.style.display = 'none';
-        const projCard = document.getElementById('projCard'); if (projCard) projCard.querySelector('.value').textContent = '-';
-        const median65Card = document.getElementById('median65Card'); if (median65Card) median65Card.querySelector('.value').textContent = '-';
-        const requiredRateCard = document.getElementById('requiredRateCard'); if (requiredRateCard) { requiredRateCard.querySelector('.value').textContent = '-'; requiredRateCard.querySelector('.label').textContent = 'Required savings rate'; }
+        const tiles = DOM.resultTiles; if (tiles) tiles.style.display = 'none';
+        const projSection = DOM.projectionSection; if (projSection) projSection.style.display = 'none';
+        const projCard = DOM.projCard; if (projCard) projCard.querySelector('.value').textContent = '-';
+        const median65Card = DOM.median65Card; if (median65Card) median65Card.querySelector('.value').textContent = '-';
+        const requiredRateCard = DOM.requiredRateCard; if (requiredRateCard) { requiredRateCard.querySelector('.value').textContent = '-'; requiredRateCard.querySelector('.label').textContent = 'Required savings rate'; }
       ['incomePercentileValue','netWorthPercentileValue','avgIncomeValue','medianIncomeValue','avgNetWorthValue','medianNetWorthValue'].forEach(id=>{
         const el = document.getElementById(id); if (el) el.textContent = '-';
       });
@@ -5587,9 +6096,9 @@ function createChart(canvasId, dataInfo, type = 'line') {
     /* Emphasize the most relevant "Using This Data" subsection */
     function updateUsingThisDataEmphasis(pct) {
       const blocks = [
-        { id: 'usingBehind', el: document.getElementById('usingBehind') },
-        { id: 'usingOnTrack', el: document.getElementById('usingOnTrack') },
-        { id: 'usingAhead', el: document.getElementById('usingAhead') },
+        { id: 'usingBehind', el: DOM.usingBehind },
+        { id: 'usingOnTrack', el: DOM.usingOnTrack },
+        { id: 'usingAhead', el: DOM.usingAhead },
       ];
       blocks.forEach(b => {
         if (!b.el) return;
@@ -5737,7 +6246,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
     function showYouVsEveryone() {
       const incTile = document.getElementById('incomePctTile');
       const netTile = document.getElementById('netPctTile');
-      const tilesWrap = document.getElementById('resultTiles');
+      const tilesWrap = DOM.resultTiles;
       if (!incTile || !netTile || !tilesWrap) return;
       if (!userActive) {
         tilesWrap.style.display = 'none';
@@ -5748,8 +6257,8 @@ function createChart(canvasId, dataInfo, type = 'line') {
       }
       const age = Math.max(AGE_START, Math.min(AGE_END, userAgeVal));
       const idx = age - AGE_START;
-      const region = document.getElementById('provinceSelect').value || 'Canada';
-      const unit = (document.getElementById('unitSelect') || {value:'households'}).value || 'households';
+      const region = DOM.provinceSelect ? DOM.provinceSelect.value : 'Canada';
+      const unit = DOM.unitSelect ? DOM.unitSelect.value : 'households';
       const incPcts = getScaledIncomePercentiles(idx, region, unit);
       const netPcts = getScaledNetWorthPercentiles(idx, region, unit);
       const incThresh = [
@@ -5875,8 +6384,8 @@ function createChart(canvasId, dataInfo, type = 'line') {
         if (targetAge <= startAge) {
           return { projected: userNetWorthVal, years: 0 };
         }
-        const unit = (document.getElementById('unitSelect') || {value:'households'}).value || 'households';
-        const region = document.getElementById('provinceSelect').value || 'Canada';
+        const unit = DOM.unitSelect ? DOM.unitSelect.value : 'households';
+        const region = DOM.provinceSelect ? DOM.provinceSelect.value : 'Canada';
         const incomeRatio = (incomeRatios[region] || 1);
         const householdMult = (unit==='households') ? EQUIVALENCE_SCALE : 1;
         // Map user's income growth to baseTotalIncome growth curve
@@ -5919,8 +6428,8 @@ function createChart(canvasId, dataInfo, type = 'line') {
         const desired = targetPct;
         // Determine goal net worth at target age for 90th percentile using base arrays scaled
         const ageIdx = Math.max(0, Math.min(ageLabels.length-1, targetAge - AGE_START));
-        const unit = (document.getElementById('unitSelect') || {value:'households'}).value || 'households';
-        const region = document.getElementById('provinceSelect').value || 'Canada';
+        const unit = DOM.unitSelect ? DOM.unitSelect.value : 'households';
+        const region = DOM.provinceSelect ? DOM.provinceSelect.value : 'Canada';
         const netBase = unit==='households' ? baseNetWorthP90 : baseIndNetWorthP90;
         // Project the percentile baseline forward to the year the user reaches targetAge.
         // base arrays use prior-year values; yearsToTarget is how many years from now until the user
@@ -6022,14 +6531,14 @@ function createChart(canvasId, dataInfo, type = 'line') {
         // Combined action: project to 65 using the supplied savings rate,
         // and compute the required savings rate to reach the 90th percentile
         // by the chosen target age. Results are merged into a single output.
-        const warnEl = document.getElementById('inputWarning');
+        const warnEl = DOM.inputWarning;
         const core = validateCoreInputs(true);
         if (!core.allValid) return;
         if (!userActive) {
           if (warnEl) warnEl.textContent = 'Click Compare to save your profile before running projections.';
           return;
         }
-        const targetAgeEl = document.getElementById('targetAge');
+        const targetAgeEl = DOM.targetAge;
         if (targetAgeEl) targetAgeEl.min = String(getTargetAgeMin());
         const projInputs = validateProjectionInputs(true);
         if (!projInputs.allValid) return;
@@ -6046,16 +6555,16 @@ function createChart(canvasId, dataInfo, type = 'line') {
         const projAdjBase = proj.projected / Math.pow(1 + pctGrowth, yearsToProj65);
         // Compare to median net worth at 65 for region/unit
         // Compare to projected median net worth at 65 for region/unit
-        const region = document.getElementById('provinceSelect').value || 'Canada';
-        const unit = (document.getElementById('unitSelect') || {value:'households'}).value || 'households';
+        const region = DOM.provinceSelect ? DOM.provinceSelect.value : 'Canada';
+        const unit = DOM.unitSelect ? DOM.unitSelect.value : 'households';
         const ageIdx65 = 65 - AGE_START;
         // Project the base-year median at age 65 forward by the number of years until the user reaches 65
         const yearsTo65 = yearsToProj65;
         const medianNet65 = ((unit==='households') ? baseNetWorth[ageIdx65] : baseIndNetWorth[ageIdx65]) * (netWorthRatios[region] || 1) * Math.pow(1 + pctGrowth, yearsTo65);
         // Populate projection cards
-        const projCard = document.getElementById('projCard');
-        const median65Card = document.getElementById('median65Card');
-        const requiredRateCard = document.getElementById('requiredRateCard');
+        const projCard = DOM.projCard;
+        const median65Card = DOM.median65Card;
+        const requiredRateCard = DOM.requiredRateCard;
         if (projCard) projCard.querySelector('.value').textContent = formatCurrency(proj.projected) + ` (${yearAt65})`;
         if (median65Card) median65Card.querySelector('.value').textContent = formatCurrency(medianNet65) + ` (${yearAt65})`;
         // Run required savings rate calculation for 90th percentile by target age
@@ -6078,7 +6587,7 @@ function createChart(canvasId, dataInfo, type = 'line') {
           }
         }
         // Show projection section if hidden
-        const projSection = document.getElementById('projectionSection');
+        const projSection = DOM.projectionSection;
         if (projSection) projSection.style.display = 'block';
       }
     });
@@ -6143,8 +6652,8 @@ function createChart(canvasId, dataInfo, type = 'line') {
       let downloadLink = null;
       try {
         ensureChartsInitialized();
-        const tiles = document.getElementById('resultTiles');
-        const proj = document.getElementById('projectionSection');
+        const tiles = DOM.resultTiles;
+        const proj = DOM.projectionSection;
         // Build a temporary container and clone the nodes we want to capture
         container = document.createElement('div');
         container.style.background = getComputedStyle(document.body).background || '#0a1931';
@@ -6223,38 +6732,198 @@ function createChart(canvasId, dataInfo, type = 'line') {
       applyCurrentYearPlaceholders();
       applyBaseYearTextSwap(String(PRIOR_BASE_YEAR), String(BASE_YEAR));
     });
-  </script>
-  <script>
-    // Accessible toggle for the "View as" info tooltip (hover, focus, click, ESC)
+
+    // Enhanced button interactions - ripple and pulse effects
     (function() {
-      const icon = document.getElementById('unitInfoIcon');
-      if (!icon) return;
-      const tooltip = icon.querySelector('.info-tooltip');
-      if (!tooltip) return;
-
-      let open = false;
-      const show = () => { tooltip.style.visibility = 'visible'; tooltip.style.opacity = '1'; open = true; };
-      const hide = () => { tooltip.style.visibility = 'hidden'; tooltip.style.opacity = '0'; open = false; };
-
-      icon.addEventListener('mouseenter', show);
-      icon.addEventListener('mouseleave', hide);
-      icon.addEventListener('focus', show);
-      icon.addEventListener('blur', hide);
-      icon.addEventListener('click', (e) => {
-        e.stopPropagation();
-        open ? hide() : show();
-      });
-      document.addEventListener('click', (e) => {
-        if (!icon.contains(e.target)) hide();
-      });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') hide();
+      document.addEventListener('DOMContentLoaded', function() {
+        const compareBtn = document.getElementById('compareBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const projectBtn = document.getElementById('projectBtn');
+        
+        // Add ripple effect to compare and project buttons
+        function addRipple(button) {
+          if (!button) return;
+          button.addEventListener('click', function() {
+            this.classList.add('ripple');
+            setTimeout(() => {
+              this.classList.remove('ripple');
+            }, 600);
+            
+            // Optional haptic feedback on mobile
+            if (navigator.vibrate) {
+              navigator.vibrate(10);
+            }
+          });
+        }
+        
+        // Add pulse effect to reset button
+        if (resetBtn) {
+          resetBtn.addEventListener('click', function() {
+            this.classList.add('pulse');
+            setTimeout(() => {
+              this.classList.remove('pulse');
+            }, 500);
+            
+            // Gentler haptic for reset
+            if (navigator.vibrate) {
+              navigator.vibrate(5);
+            }
+          });
+          
+          // Dim reset button when form is empty
+          function updateResetButtonState() {
+            const userAge = document.getElementById('userAge');
+            const userIncome = document.getElementById('userIncome');
+            const userNetWorth = document.getElementById('userNetWorth');
+            
+            const hasContent = (userAge && userAge.value) || 
+                              (userIncome && userIncome.value) || 
+                              (userNetWorth && userNetWorth.value);
+            
+            resetBtn.style.opacity = hasContent ? '1' : '0.5';
+          }
+          
+          // Listen for input changes
+          ['userAge', 'userIncome', 'userNetWorth'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+              el.addEventListener('input', updateResetButtonState);
+            }
+          });
+          
+          // Initial check
+          updateResetButtonState();
+        }
+        
+        // Apply ripple to primary action buttons
+        addRipple(compareBtn);
+        addRipple(projectBtn);
       });
     })();
-
-    try {
-      if (window.VIBE && typeof VIBE.triggerReady === 'function') VIBE.triggerReady();
-    } catch (e) { /* no-op */ }
+  </script>
+  <script>
+    // Simple tooltip boundary detection
+    (function() {
+      document.addEventListener('DOMContentLoaded', function() {
+        const infoIcons = document.querySelectorAll('.info-icon');
+        
+    function updateTooltipPosition(icon) {
+      if (!icon) return;
+      
+      // Remove all positioning classes
+      icon.classList.remove('tooltip-below', 'tooltip-left');
+      
+      const rect = icon.getBoundingClientRect();
+      const tooltip = icon.querySelector('.info-tooltip');
+      if (!tooltip) return;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const gap = 10;
+      const tooltipWidth = tooltip.offsetWidth || 240;
+      const tooltipHeight = tooltip.offsetHeight || 120;
+      const spaceRight = viewportWidth - rect.right;
+      const spaceLeft = rect.left;
+      const spaceAbove = rect.top;
+      const spaceBelow = viewportHeight - rect.bottom;
+      
+      // Flip to left if not enough room on the right
+      if (spaceRight < tooltipWidth + gap && spaceLeft >= tooltipWidth + gap) {
+        icon.classList.add('tooltip-left');
+      }
+      // If vertical space is tight, show below
+      if (spaceAbove < tooltipHeight + gap && spaceBelow >= tooltipHeight + gap) {
+        icon.classList.add('tooltip-below');
+      }
+    }
+        
+        // Update positions for all icons
+        function updateAllTooltips() {
+          infoIcons.forEach(icon => updateTooltipPosition(icon));
+        }
+        
+        // Set up each icon
+        infoIcons.forEach(icon => {
+          // Update position when hovering
+          icon.addEventListener('mouseenter', () => updateTooltipPosition(icon));
+          icon.addEventListener('focus', () => updateTooltipPosition(icon));
+          
+          // Click toggle for touch devices
+          icon.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const tooltip = icon.querySelector('.info-tooltip');
+            if (!tooltip) return;
+            
+            const isVisible = getComputedStyle(tooltip).visibility === 'visible';
+            
+            // Hide all other tooltips
+            infoIcons.forEach(otherIcon => {
+              if (otherIcon !== icon) {
+                const otherTooltip = otherIcon.querySelector('.info-tooltip');
+                if (otherTooltip) {
+                  otherTooltip.style.visibility = 'hidden';
+                  otherTooltip.style.opacity = '0';
+                }
+              }
+            });
+            
+            // Toggle this one
+            if (isVisible) {
+              tooltip.style.visibility = 'hidden';
+              tooltip.style.opacity = '0';
+            } else {
+              updateTooltipPosition(icon);
+              tooltip.style.visibility = 'visible';
+              tooltip.style.opacity = '1';
+            }
+          });
+        });
+        
+        // Update on resize
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(updateAllTooltips, 100);
+        });
+        
+        // Update on scroll
+        let scrollTimer;
+        window.addEventListener('scroll', () => {
+          clearTimeout(scrollTimer);
+          scrollTimer = setTimeout(updateAllTooltips, 50);
+        }, { passive: true });
+        
+        // Close tooltips when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.info-icon')) {
+            infoIcons.forEach(icon => {
+              const tooltip = icon.querySelector('.info-tooltip');
+              if (tooltip) {
+                tooltip.style.visibility = 'hidden';
+                tooltip.style.opacity = '0';
+              }
+            });
+          }
+        });
+        
+        // Close on ESC
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            infoIcons.forEach(icon => {
+              const tooltip = icon.querySelector('.info-tooltip');
+              if (tooltip) {
+                tooltip.style.visibility = 'hidden';
+                tooltip.style.opacity = '0';
+              }
+            });
+          }
+        });
+        
+        // Initial position check
+        updateAllTooltips();
+      });
+    })();
   </script>
 </body>
 </html>
